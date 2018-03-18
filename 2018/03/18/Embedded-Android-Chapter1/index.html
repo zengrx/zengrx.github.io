@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="简介 Introduction将安卓操作系统移植到嵌入式设备上是一项复杂的任务，这包括了对系统内部复杂设计的理解，巧妙地将修改融入到安卓开源项目，以及对内核运行平台——Linux的掌握。在开始进入到嵌入式安卓细节之前，先让我们了解一些安卓系统背后的本质内容，例如安卓的硬件需求，安卓的法律体制和对嵌入式设备的影响等。首先，让我们一起看一看安卓的诞生与发展。Putting Android on an">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Embedded Android -- Chapter1">
+<meta property="og:url" content="http://yoursite.com/2018/03/18/Embedded-Android-Chapter1/index.html">
+<meta property="og:site_name" content="二又三">
+<meta property="og:description" content="简介 Introduction将安卓操作系统移植到嵌入式设备上是一项复杂的任务，这包括了对系统内部复杂设计的理解，巧妙地将修改融入到安卓开源项目，以及对内核运行平台——Linux的掌握。在开始进入到嵌入式安卓细节之前，先让我们了解一些安卓系统背后的本质内容，例如安卓的硬件需求，安卓的法律体制和对嵌入式设备的影响等。首先，让我们一起看一看安卓的诞生与发展。Putting Android on an">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-03-18T08:50:57.980Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Embedded Android -- Chapter1">
+<meta name="twitter:description" content="简介 Introduction将安卓操作系统移植到嵌入式设备上是一项复杂的任务，这包括了对系统内部复杂设计的理解，巧妙地将修改融入到安卓开源项目，以及对内核运行平台——Linux的掌握。在开始进入到嵌入式安卓细节之前，先让我们了解一些安卓系统背后的本质内容，例如安卓的硬件需求，安卓的法律体制和对嵌入式设备的影响等。首先，让我们一起看一看安卓的诞生与发展。Putting Android on an">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/03/18/Embedded-Android-Chapter1/"/>
+
+
+
+
+
+  <title>Embedded Android -- Chapter1 | 二又三</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">二又三</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">∠(ᐛ」∠)＿</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/18/Embedded-Android-Chapter1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ross Zeng">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/pk.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="二又三">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Embedded Android -- Chapter1</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-18T16:44:25+08:00">
+                2018-03-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="简介-Introduction"><a href="#简介-Introduction" class="headerlink" title="简介 Introduction"></a>简介 Introduction</h3><p>将安卓操作系统移植到嵌入式设备上是一项复杂的任务，这包括了对系统内部复杂设计的理解，巧妙地将修改融入到安卓开源项目，以及对内核运行平台——Linux的掌握。在开始进入到嵌入式安卓细节之前，先让我们了解一些安卓系统背后的本质内容，例如安卓的硬件需求，安卓的法律体制和对嵌入式设备的影响等。首先，让我们一起看一看安卓的诞生与发展。<br>Putting Android on an embedded device is a complex task involving an intricate understanding of its internals and a clever mix of modifications to the Android Open Source Project (AOSP) and the kernel on which it runs, Linux. Before we get into the details of embedding Android, however, let’s start by covering some essential background that embedded developers should factor in when dealing with Android, such as Android’s hardware requirements and the legal framework surrounding Android and its implications within an embedded setting. First let’s look at where Android comes from and how it’s developed.</p>
+<a id="more"></a>
+<h3 id="历史-Histroy"><a href="#历史-Histroy" class="headerlink" title="历史 Histroy"></a>历史 Histroy</h3><p>故事的开始要追溯到2002年早期，Larry page和Sergey Brin参加了Danger公司关于Sidekick手机研发在斯坦福举办的一次访谈，主讲人是当时Danger公司的CEO Andy Rubin。Sidekick手机是第一批具备多功能并且能够介入互联网的设备。活动结束后，Larry上前查看Sidekick手机，他非常开心地发现这款手机使用了谷歌作为默认搜索引擎。不久之后，Larry和Sergey都成为了Sidekick的用户。<br>The story goes that back in early 2002 Google’s Larry Page and Sergy Brin attended a talk at Standford about the development of the then-new Sidekick phone by Danger Inc. The speaker was Andy Rubin, Danger’s CEO at the time, and the Sidekick was one of the first multi-function, Internet-enabled devices. After the talk, Larry went up to look at the device and was happy to see that Google was the default search engine. Soon after, both Larry and Sergey became Sidekick users.</p>
+<p>尽管Sidekick十分新颖且迎合用户，但它并没有取得商业上的成功。2003年，Rubin和公司董事会一致认为到了让他离开的时候。在尝试了其他的一些方向后，Rubin决定重返手机操作系统行业。他使用早前注册的域名android.com，打算为手机制造商创造一个开放的操作系统。Rubin为安卓项目投入了大部分积蓄，同时获得了一些启动资金。于是Rubin着手创办安卓公司。不久后，在2005年的8月份，谷歌低调地收购了安卓。<br>Despite its novelty and enthusiatic users, however, the Sidekick didn’t achieve commercial success. By 2003, Rubin and Danger’s borad agreed it was time for him to leave. After trying out a few things, Rubin decided he wanted to get back into the phone OS business. Using a domain name he previously-owned. <em>android.com</em>, he set out to create an open OS for phone manufacturers. After investing most of his savings on the project and having received some additional seed money, he set out to get the company funded. Soon after, in August 2005, Google acquired Android Inc. with little fanfare.</p>
+<p>在安卓从被收购到2007年11月公之于众的日子里，谷歌很少对外放出它的消息。相反，研发团队正在幕后拼命地工作。最初的声明是由开放手机联盟（OHA）发布，联盟由一系列移动设备领域相关的公司组建，安卓正是它的首款产品。一年后，安卓的第一版开源版本，Android 1.0在2008年12月被推出。<br>Between its acquisition and its announcement to the world in November 2007, Google let little to no information out about Android. Instead, the development team worked furiously on the OS while deals and prototypes were being worked on behind the scenes. The initial announcement was made by the <em>Open Handset Alliance</em> (OHA), a group of companies unveiled for mobile device and Android being its first product. A year later, in September 2008, the first open source version of Android, 1.0, was made available.</p>
+<p>此后，安卓陆续发布多个版本。虽然还有很多工作仍是在秘密地开展，但以后我们会看到，安卓操作系统的研发进度以及发展状态终将变得更加公开透明。表1-1汇总了不同安卓系统版本在AOSP（Android Open Source Project）中对应最显著的特性。<br>Several Android versions have been released since then, and the OS’s progression and development is obviously more public. As we will see later, though, much of the work on Android continues to be done behind closed doors. Table 1-1 provides a summary of the various Android releases and the most notable features found in the corresponding AOSP.</p>
+<ul>
+<li><em>Table 1-1. Android Versions</em></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Release date</th>
+<th>codename</th>
+<th>Most notable feature(s)</th>
+<th>Open source </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>September 2008</td>
+<td><em>Unknown</em></td>
+<td></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>February 2009</td>
+<td><em>Unknown</em></td>
+<td></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>1.5</td>
+<td>April 2009</td>
+<td>Cupcake</td>
+<td>On-screen soft keyboard</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>1.6</td>
+<td>September 2009</td>
+<td>Dount</td>
+<td>Battery usage screen and VPN support</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>2.0, 2.0.1, 2.1</td>
+<td>October 2009</td>
+<td>Eclair</td>
+<td>Exchange support</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>2.2</td>
+<td>May 2010</td>
+<td>Froyo</td>
+<td>Just-In-Time (JIT) compile</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>2.3</td>
+<td>December 2010</td>
+<td>Gingerbread</td>
+<td>SIP and NFC support</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>3.0</td>
+<td>January 2011</td>
+<td>Honeycomb</td>
+<td>Tablet form-factor support</td>
+<td>No</td>
+</tr>
+<tr>
+<td>3.1</td>
+<td>May 2011</td>
+<td>Honeycomb</td>
+<td>USB host support And APIs</td>
+<td>No</td>
+</tr>
+<tr>
+<td>4.0</td>
+<td>December 2011 (projected)</td>
+<td>Ice-Cream Sandwich</td>
+<td>Merged phone and tablet form-factor support</td>
+<td>Yes (projected)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="特征与特色-Features-and-Characteristics"><a href="#特征与特色-Features-and-Characteristics" class="headerlink" title="特征与特色 Features and Characteristics"></a>特征与特色 Features and Characteristics</h3><p>谷歌例举了安卓如下的特征<br>Google advertizes the following features about Android:</p>
+<blockquote>
+<p><em>应用程序框架</em><br>开发者们使用应用程序框架来开发人们常说的安卓应用。在 <a href="http://developer.android.com" target="_blank" rel="noopener">http://developer.android.com</a> 网站和O’Reilly的<em>Learning Android</em>中都有介绍。<br><em>Application framework</em><br>The application framework used by app developers to create what is commonly-referred to as Android apps. The use of this framework is documented online at <a href="http://developer.android.com" target="_blank" rel="noopener">http://developer.android.com</a> and in books like O’Reilly’s <em>Learning Android</em>.</p>
+<p><em>Dalvik虚拟机</em><br>安卓使用字节码解释器来代替Sun公司的java虚拟机。与java被解释为.class与.jar文件不同，Dalvik将java代码通过dx作用？？？解释成.dex文件。<br><em>Dalvik Virtual Machine</em><br>The clean-room bytecode interpreter implementation used in Android as a replacement for the Sun java VM. While the latter interprets .class and .jar files, Dalvik interprets .dex files. These files are generated by the <em>dx</em> utility using the .class files generate by the Java compiler part of the JDK.</p>
+<p><em>浏览器集成</em><br>安卓包含了基于WebKit的浏览器作为其应用标准列表的一部分。应用开发者们可以通过调用<strong>WebView</strong>类来使用WebKit引擎。<br><em>Integrated browser</em><br>Android includes a WebKit-based browser as part of it standard list of applications. App developers can use the <strong>WebView</strong> class to use the WebKit engine within their own apps.</p>
+<p><em>优化的图形库</em><br>安卓提供了自己的2D图形库，但是3D表现能力仍然依赖OpenGL为嵌入式设备设计的API。<br><em>Optimized graphics</em><br>Android provides its own 2D graphics library but relies on OpenGL ES for its 3D capabilities.</p>
+<p><em>SQLite数据库</em><br>安卓使用了标准的SQLite数据库，应用开发者们可以通过应用程序框架操作数据库引擎。<br><em>SQLite</em><br>This is the standard SQLite database found at <a href="http://www.sqlite.org" target="_blank" rel="noopener">http://www.sqlite.org</a> and made available to app developers through the application framework.</p>
+<p><em>多媒体支持</em><br>安卓通过StageFright框架提供了非常广泛的媒体格式支持。在2.2版本之前，安卓一度使用了PacketVideo的OpenCore框架。<br><em>Media support</em><br>Android provides support for a wide range of media formats through StageFright, its custom media framework. Prior to 2.2, Android used to rely on PacketVideo’s OpenCore framework.</p>
+<p><em>GSM电话支持</em><br>通话功能是由硬件设备提供的，设备制造商必需提供一个硬件抽象层的模块让安卓系统接入他们的设备。硬件抽象层将会在下一章节来讨论。<br><em>GSM telephony support</em><br>The telephony support is hardware dependent and device manufacturers must provide a HAL module in order enable Android to interface with their hardware. HAL modules will be discussed in the next chapter.</p>
+<p><em>蓝牙，EDGE，3G和无线热点</em><br>安卓几乎支持现有的所有无线连接技术。有一些功能由安卓特有的方式实现，例如EDGE和3G，而像蓝牙和WiFi等功能则与普通Linux相似。<br><em>Bluetooth, EDGE, 3G, and WiFi</em><br>Android includes support for most wireless connection technologies. While some implemented in Android-specific fashion, such as EDGE and 3G, others are provided in the same as in plain Linux, as in the case of Bluetooth and WiFi.</p>
+<p><em>相机，GPS，指南针和加速度计</em><br>用户环境接口是安卓系统的关键。API的存在使得从应用程序框架去访问设备成为了现实，而使用这些设备及传感器则需要相应的硬件抽象层模块来支持。<br><em>Camera, GPS, compass, and accelerometer</em><br>Interfacing with the user’s environment is key to Android. APIs are made available in the application framework to access there devices, and some HAL modules are required to enable their support.</p>
+<p><em>丰富的开发环境</em><br>这也是安卓最宝贵的财富之一，这些丰富的资源降低了程序开发的门槛。带有模拟器的完整SDK，Eclipse插件以及数量众多的分析调试工具都被免费提供给开发者。<br><em>Rich development environment</em><br>This is likely one of Android’s greatest assets. The development environment available to developers makes it very easy to get started with Android development. A full SDK is freely available to download along with an emulator, an Eclipse plugin, and a number of debugging and profiling tools.</p>
+</blockquote>
+<p>当然，安卓还有很多特征可以被例举，例如USB支持，多任务，多点触控，网络共享，语音指令等等。但是之前提及的那些特征能够给你一个清晰的认识——你能够在安卓系统中发现什么。并且每个新版本发布都会带来新的特性。查看每个版本在平台上高亮标记的公告，你会发现更多关于系统特性与提升的信息。<br>There are of course a lot more features that could be listed for Android, such as USB support, multitasking, multi-touch SIP, tethering, voice-activated commands, etc., but the previous list should give you a good idea of what you’ll find in Android. Also note that every new Android release brings in its own new set of features. Check the <em>Platform Highlights</em> published with every version for more information on features and enhancements.</p>
+<p>除了这些基本的特性外，安卓平台也有一些对于嵌入式开发而言颇有意思的特点：<br>In addition to its basic feature-set, the Android platform has a few characteritics that make it an especially interesting basis for embedded use. Here’s a quick summary:</p>
+<blockquote>
+<p><em>广阔的应用程序生态</em><br>到目前为止，安卓市场已有超过二十万个应用，已经很接近苹果应用市场的三十五万个应用。这保证了你在为嵌入式设备打包应用时由足够的选择空间。<br><em>Broad app ecosystem</em><br>At the time of this writing there were 200,000 apps in the Android Market. This compares quite favorably to the Apple App Market’s 350,000 apps and ensures that you have a large pool to choose from should you want to prepackaged applications with your embedded device.</p>
+<p><em>统一的应用API</em><br>应用程序框架提供的所有API都被设计为向上兼容。因此，为嵌入式设备定制的应用能够继续工作在未来的安卓系统中。相比之下，对安卓源码的修改并不能适配，甚至无法正常地工作在后续的新版本上。<br><em>Consistent app APIs</em><br>All APIs provided in the application framework are meant to be forward-compatible. Hence, custom apps you develop for inclusion in your embedded system should continue working in future Android versions. In contrast, modifications you make to Android’s source code are not guaranteed to continue applying or even working in the next Android release.</p>
+<p><em>可替换的组件</em><br>因为安卓的开源，并且得益于其设计架构，很多组件可以被直接替换。比如你不喜欢安卓默认的启动器（桌面），完全可以自己写一个新的代替它。当然，安卓也可以接收更加底层的修改，例如在不修改任何应用API的情况下使用GStreamer替换默认的多媒体框架StageFright<br><em>Replaceable components</em><br>Because Android is open source, and as a benefit of its architecture, a lot of its components can be replaced outright. For instance, if you don’t like the default app Launcher (home screen), you can write your own. More fundamental changes can also be made to Android. The GStreamer developers, for example, were able to replace StageFright, the default media framework in Android, with GStreamer without modifying the app API.</p>
+<p><em>可扩展性</em><br>安卓的开放性和架构特点带来的另一个好处是，开发者添加额外的功能和硬件会相对简单。你只需要模仿平台对同类型其他硬件或特性的操作步骤。例如，你可以仅仅在硬件抽象层添加少量的文件达到支持客制化硬件的需求。<br><em>Extendable</em><br>Another benefit from Android’s openness and its architecture is that adding support for additional features and hardware is relatively straightforward. You just need to emulate what the platform is doing for other hardware or features of the same type. For instance, you can add support for custom hardware to the HAL by adding a handful of files.</p>
+<p><em>客制化</em><br><em>Customizable</em><br>如果你更加倾向使用现成的组件，例如默认的启动器应用，但你仍然可以把它变成你喜欢的样子。无论是把这些组件改成你期望的行为，还是更换它们的界面，都可以自由地修改安卓开源项目。<br>If you’d rather use existing components, such as the existing Launcher app, you can still customize them to your liking. Whether it be tuning their behavior or changing their look and feel, you are again free to modify the AOSP as needed.</p>
+</blockquote>
+<h3 id="发开模式-Development-Model"><a href="#发开模式-Development-Model" class="headerlink" title="发开模式 Development Model"></a>发开模式 Development Model</h3><p>当你考虑是否使用安卓时，了解它的发展过程对修改源码或面对内部依赖时就显得相当重要了。<br>When considering whether to use Android, it’s crucial that you understand the ramifications its development process may have on any modifications you make to it or any dependencies you may have towards its internals.</p>
+<h4 id="不同于“传统的”开源项目-Differences-With-“Classic”-Open-Source-Projects"><a href="#不同于“传统的”开源项目-Differences-With-“Classic”-Open-Source-Projects" class="headerlink" title="不同于“传统的”开源项目 Differences With “Classic” Open Source Projects"></a>不同于“传统的”开源项目 Differences With “Classic” Open Source Projects</h4><p>开源是安卓最为人知的特点。事实上，正如我们所看见，许多开源的软件工程项目被使用在安卓系统中。<br>Android’s open source nature is one of the most trumpeted features. Indeed, as we’ve just seen, many of the software engineering benefits that derive from being open source apply to Android.</p>
+<p>尽管有许可证，但安卓却不像多数开源项目那样，它的开发基本上处于非公开状态。比如，大多数的开源项目有公共邮件列表及论坛，可以与主要开发人员交流，且公共的仓库能够提供主开发分支的最新提交。安卓并没有这些。<br>Despite its licensing, however, Android is unlike most open source projects in that its development is mostly done behind closed doors. The vast majority of open source projects, for example, have public mailing lists and forums where the main developers can be found interacting with each other, and public source repositories providing access to the main development branch’s tip. No such thing can be found for Android.</p>
+<p>最好的总结获取来自Andy Rubin，“开源项目与社区驱动型项目不同。相比于社区，安卓更加重视开源？？？”<br>This is best summarized by Andy Rubin himself: “Open source is different than a community-driven project. Android is light on community-driven, somewhat heavy on open source.”</p>
+<p>无论我们喜欢与否，安卓主要还是由谷歌的安卓研发团队开发，公众们既无法参与内部讨论，也无法获取最新的开发分支。不过，谷歌仍然会在新机器适配系统后释放一次代码，这个周期一般是六个月。比如在2010年12月，三星代工的二儿子面市之后的几天，代号姜饼的安卓2.3系统代码已经可以在<a href="http://android.git.kernel.org/" target="_blank" rel="noopener">http://android.git.kernel.org/</a> 上拉取了。<br>Whether we like it or not, Android is mainly developed within Google by the Android development team and the public is not privy to either internal discussions or the tip of the development branch. Instead, Google makes code-drops every time a new version of Android ships on a new device, which is usually every 6 months. For instance, a few days after the Samsung Nexus S was released in December 2010, the code for the new version of the Android it was running, 2.3/Gingerbread, was made publicly available at <a href="http://android.git.kernel.org/" target="_blank" rel="noopener">http://android.git.kernel.org/</a>.</p>
+<p>很显然，开源社区中弥漫着一种不适感。安卓作为一个极其流行的项目，在继续标榜自己开源的同时，其开发模式却又与标准的开源项目背道而驰。在历史上，采用类似这种开发模式的项目从来没有为社区良好地服务过。<br>Obviously there is a certain amount of discomfort within the open source community with the continued use of the term “open source” within the context of project whose development model contradicts the standard modus operandi typically associated with open source projects, especially given Android’s popularity. The open source community has not historically been well served by projects that had adopted a similar development model.</p>
+<p>撇开这些问题不谈，安卓的研发也是有限的。事实上，除非成为谷歌安卓团队的一员，否则你无法为安卓的开发分支做出贡献。另外，除极少数个例外，你也无法与核心团队成员一对一地讨论所做的改进。不过，你仍然可以在<a href="http://android.git.kernel.org/" target="_blank" rel="noopener">http://android.git.kernel.org/</a> 上把修改和改进提交到AOSP。<br>Political issues aside, though, Android’s development is limited. Indeed, unless you become part of the Android development team at Google, you will not be able to make contributions to the tip of the development branch. Also, save for a handful of exceptions, you will unlikely be able to discuss your enhancements one-on-one with the core development team members. However, you are still free to submit enhancements and fixes to the AOSP code dumps made available at <a href="http://android.git.kernel.org/" target="_blank" rel="noopener">http://android.git.kernel.org/</a>.</p>
+<p>谷歌这种做法带来最糟糕的副作用就是——你完全没有办法知道安卓研发团队对平台决策的内部消息。如果新的特性被加进了AOSP，例如核心组件被修改时，你只能通过分析之后释放的代码才能了解这些修改是如何完成的，会对你做的改动产生何种影响。此外，你也不可能知道带来这些新增和改动的需求、标准以及问题究竟是什么。如果这是一个原汁原味的开源项目，那么必然会有一个公共邮件列表归档了项目所有相关的信息和观点，这是非常有用的。<br>The worst side-effect of Google’s approach is that you have absolutely no way to get inside information about the platform decisions being made by the Android development team. If new features are added within the AOSP, for example, or if modifications are made to core components, you will find out how such changes are made and how they impact changes you might have made to a previous version only by analyzing the next code dump. Furthermore, you will have no way to find out the underlying requirement or restriction or issue that justified the modification or inclusion. Had this been a true open source project, a public mailing list archive would exist where all this information, or pointers to it, would be available.</p>
+<p>尽管如此，谷歌在开源协议下发布安卓操作系统的贡献是那么重要，虽然以开源社区角度来看，它的开发模式十分尴尬。谷歌在安卓上的付出确确实实帮了众多开发者们的大忙。此外，安卓项目还完成了一项创举：创造了一个大规模成功的Linux发行版。因此，安卓团队的努力确实可以称得上无可挑剔。<br>That being said, it’s important to remember how significant a contribution Google is making by distributing Android under an open source license. Despite its awkward development model from an open source community perspective, it remains that Google’s work on Android is a godsend for a large number of developers. Plus, it has accomplished one thing no other open source projects was ever able to: create a massively successful Linux distribution. It would, therefore, be hard to fault Android’s development team for their work.</p>
+<p>Furthermore, it can easily be argued that from a business and go-to-market perspective a community-driven process would definitely knock the wind out of any product announcements Google would attempt to release, making it impossible to create “buzz” around press announcements and the like since every new feature would be developed in the open. That is to say nothing of the non-deterministic nature of community-driven processes that can see a group of people take years to agree on the best way to implement a given feature set. And, simply based on track record, Andoid’s success has definitely benefited from Google’s ability to rapidly move it forward and generate press interset based on releases of cool new products.</p>
+<h4 id="Feature-Inclusion-Roadmaps-and-New-Releases"><a href="#Feature-Inclusion-Roadmaps-and-New-Releases" class="headerlink" title="Feature Inclusion, Roadmaps, and New Releases"></a>Feature Inclusion, Roadmaps, and New Releases</h4><p>In brief, there is no publicly available roadmap for features and capabilities in future Android releases. At best, Google will announce ahead of time the name and approximate release date of the next version. Usually, you can expect a new Android release to be made in time for the Google I/O conference, which is typically held in May, and another release by year end. What will be in that release, though, is anyone’s guess.</p>
+<p>Typically, however, Google will choose a single manufacturer to work with on the next Android release. During the period, Google will work very closely with that single manufacturer’s engineers to ready up the next Android version to work on a targeted upcoming flagship device. During the period, the manufacturer’s team is reported to have access to the tip of the development branch. Once the device is put on the market, the corresponding source code dump is made to the public repositories. For the next release, they choose another manufacturer and start over.</p>
+<p>There is one notable exception to the cycle: Android 3.x/Honeycomb. In that specific case, Google has not released the source code to the corresponding flagship product, the Motorola Xoom, and all indications suggest that that code may never be publicly available. The ratinable in this case seems to be that Android development team essentially forked the Android code-base at some point in time in order to start working on getting a tablet-ready version of Android out ASAP based on market timing prerogatives. Hence, in that version, very little regard was made to preserving backward compatibility with the phone form-factor. And given that, Google did not wish to make the code available to avoid fragmentation of its platform. Instead, at the time of this writing, plans are that both the phone and tablet form factor support will be merged into the upcoming Android 4.0/Ice-Cream sandwich release.</p>
+<h3 id="Ecosystem"><a href="#Ecosystem" class="headerlink" title="Ecosystem"></a>Ecosystem</h3><p>As of June 2011:</p>
+<ul>
+<li>400,000 Android phones are activated each day, up from 300,000 in December 2010 and 200,000 in August of that same year.</li>
+<li>The Android Market contains around 200,000 apps. In comparison, the Apple App Store has 350,000 apps.</li>
+<li>More than a third of all phones sold in the US are based on Android.<br>Android is clearly on the upswing. In fact, Gartner predicted in April 2011 that Android would hold about 50% of the smartphone market by 2015. Much as Linux disrupted the embedded market about a decade ago, Android is poised to make its mark. Not only will it flip the mobile market on its head, eliminating or sidelining even some of the strongest players, but in the embedded space it is likely going to become the defacto standard UI for a vast majority of user-centric embedded devices.</li>
+</ul>
+<p>An entire ecosystem is therefore rapidly building around Android. Silicon and system-on-chip (SoC) manufacturers such as ARM, TI, Qualcomm, Freescale, Nvidia and TI hace added Android support for their products, and handset and tablet manufacturers such as Motorola, Samsung, HTC, Sony-Ericsson, LG, Archos, DELL, ASUS, etc. ship an ever-increasing number of diverse players, such as Amazon, Verizon, Sprint and Barnes&amp;Nobles, creating their own application markets.</p>
+<p>Grass-roots communities and projects are also starting to sprout around Android, even though it is developed behind closed doors. Some of those efforts follow in the footsteps of phone modders, which essentially rely on hacking the binaries provided by the manufacturers to create their own modifications or variants, while others have a more open source tint to them, relying on the Android sources to create their own forks or additions. THe <em>xda-developers.com</em> online forum, for instance, is traditionally frequented by modders, while the <em>cyanogenmod.com</em> site hosts an Android fork which modifies the Android sources to provide additional features and enhancements. Ohter Android forks include Replicant (<em><a href="http://replicant.us" target="_blank" rel="noopener">http://replicant.us</a></em>), which aims at replacing as many of the Android components with Free Software as possible, and MIUI (<em><a href="http://en.miui.com/" target="_blank" rel="noopener">http://en.miui.com/</a></em>), which provides some cool UI hacks.</p>
+<h3 id="A-Word-on-the-Open-Handset-Alliance"><a href="#A-Word-on-the-Open-Handset-Alliance" class="headerlink" title="A Word on the Open Handset Alliance"></a>A Word on the Open Handset Alliance</h3><p>to be continued….</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/18/Embedded-Android-Preface/" rel="next" title="Embedded Android -- Preface">
+                <i class="fa fa-chevron-left"></i> Embedded Android -- Preface
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/pk.png"
+                alt="Ross Zeng" />
+            
+              <p class="site-author-name" itemprop="name">Ross Zeng</p>
+              <p class="site-description motion-element" itemprop="description">那就这样吧</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/zengrx" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/rx_z" target="_blank" title="OSChina">
+                    
+                      <i class="fa fa-fw fa-globe"></i>OSChina</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://steamcommunity.com/id/zengrx/" target="_blank" title="Steam">
+                    
+                      <i class="fa fa-fw fa-steam"></i>Steam</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.instagram.com/zeng_rx/" target="_blank" title="Instagram">
+                    
+                      <i class="fa fa-fw fa-instagram"></i>Instagram</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介-Introduction"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x7B80;&#x4ECB;-Introduction" class="headerlink" title="&#x7B80;&#x4ECB; Introduction"></a>&#x7B80;&#x4ECB; Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#历史-Histroy"><span class="nav-number">2.</span> <span class="nav-text"><a href="#&#x5386;&#x53F2;-Histroy" class="headerlink" title="&#x5386;&#x53F2; Histroy"></a>&#x5386;&#x53F2; Histroy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#特征与特色-Features-and-Characteristics"><span class="nav-number">3.</span> <span class="nav-text"><a href="#&#x7279;&#x5F81;&#x4E0E;&#x7279;&#x8272;-Features-and-Characteristics" class="headerlink" title="&#x7279;&#x5F81;&#x4E0E;&#x7279;&#x8272; Features and Characteristics"></a>&#x7279;&#x5F81;&#x4E0E;&#x7279;&#x8272; Features and Characteristics</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#发开模式-Development-Model"><span class="nav-number">4.</span> <span class="nav-text"><a href="#&#x53D1;&#x5F00;&#x6A21;&#x5F0F;-Development-Model" class="headerlink" title="&#x53D1;&#x5F00;&#x6A21;&#x5F0F; Development Model"></a>&#x53D1;&#x5F00;&#x6A21;&#x5F0F; Development Model</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#不同于“传统的”开源项目-Differences-With-“Classic”-Open-Source-Projects"><span class="nav-number">4.1.</span> <span class="nav-text"><a href="#&#x4E0D;&#x540C;&#x4E8E;&#x201C;&#x4F20;&#x7EDF;&#x7684;&#x201D;&#x5F00;&#x6E90;&#x9879;&#x76EE;-Differences-With-&#x201C;Classic&#x201D;-Open-Source-Projects" class="headerlink" title="&#x4E0D;&#x540C;&#x4E8E;&#x201C;&#x4F20;&#x7EDF;&#x7684;&#x201D;&#x5F00;&#x6E90;&#x9879;&#x76EE; Differences With &#x201C;Classic&#x201D; Open Source Projects"></a>&#x4E0D;&#x540C;&#x4E8E;&#x201C;&#x4F20;&#x7EDF;&#x7684;&#x201D;&#x5F00;&#x6E90;&#x9879;&#x76EE; Differences With &#x201C;Classic&#x201D; Open Source Projects</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Feature-Inclusion-Roadmaps-and-New-Releases"><span class="nav-number">4.2.</span> <span class="nav-text"><a href="#Feature-Inclusion-Roadmaps-and-New-Releases" class="headerlink" title="Feature Inclusion, Roadmaps, and New Releases"></a>Feature Inclusion, Roadmaps, and New Releases</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ecosystem"><span class="nav-number">5.</span> <span class="nav-text"><a href="#Ecosystem" class="headerlink" title="Ecosystem"></a>Ecosystem</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#A-Word-on-the-Open-Handset-Alliance"><span class="nav-number">6.</span> <span class="nav-text"><a href="#A-Word-on-the-Open-Handset-Alliance" class="headerlink" title="A Word on the Open Handset Alliance"></a>A Word on the Open Handset Alliance</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ross Zeng</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a></div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
