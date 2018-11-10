@@ -1,7 +1,8 @@
 ---
 title: Embedded Android -- Preface
 date: 2018-03-18 16:38:29
-tags:
+tags: 
+- Embedded Android Translation
 ---
 
 ## 前言

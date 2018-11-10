@@ -1,7 +1,8 @@
 ---
 title: Embedded Android -- Chapter1
 date: 2018-03-18 16:44:25
-tags:
+tags: 
+- Embedded Android Translation
 ---
 
 

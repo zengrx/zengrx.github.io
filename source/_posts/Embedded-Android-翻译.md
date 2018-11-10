@@ -1,7 +1,8 @@
 ---
 title: Embedded Android 翻译
 date: 2018-03-03 21:25:19
-tags:
+tags: 
+- Embedded Android Translation
 ---
 
 

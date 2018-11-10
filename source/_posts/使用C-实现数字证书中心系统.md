@@ -1,7 +1,10 @@
 ---
 title: 使用C++实现数字证书中心系统
 date: 2017-12-16 11:28:42
-tags:
+tags: 
+- C++
+- OpenSSL
+- certificate
 ---
 
 ## 概要

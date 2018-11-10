@@ -1,7 +1,8 @@
 ---
 title: android OTA 升级包校验分析
 date: 2018-03-03 21:06:19
-tags:
+tags: 
+- Android
 ---
 
 做一个安卓系统OTA校验的记录
