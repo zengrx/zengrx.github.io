@@ -1,0 +1,174 @@
+---
+title: Embedded Android Chapter2
+date: 2018-11-10 11:06:33
+tags:
+---
+
+
+### 内部入门 Internals Primer
+
+正如我们之前所说，安卓源码可以自由地为人们所下载、修改以及安装至选择的机器中。实际上，仅仅是获取、编译代码，再将其运行在安卓模拟器这个过程并不值得一提。能够为你自己的硬件及设备客制化AOSP，做到这件事的前提是需要对安卓的内部结构有一定掌握。所以在这一章，我们先从一个较高的视角去看待安卓内部，在后续章节中再找机会深入理解各个部分。
+As we've just seen, Android's source are freely available for you to download, modify, and install for any device you choose. In fact, it is fairly trivial to just grab the code, build it, and run it in the Android emulator. To customize the AOSP to your device and its hardware, however, you'll need to first understand Android's internals to a certain extent. So we'll get high-level view of Android internals in this chapters, and get opportunity in later chapters to dig into parts of internals in greater detail, including trying said internals to the actual AOSP sources.
+
+<!-- more -->
+
+### 应用开发人员的看法 App Developer's View
+
+为安卓研发人员提供的API并不同于其他现有的API，包括Linux世界中能够找到的任何API，这值得花一些时间以应用开发人员的视角去理解“Android”到底是什么，虽然每个人研究AOSP后对安卓的理解都不一样。作为一名嵌入式工程师，你或许不需要像其他一些同事那样直接面对安卓应用的API的特性。如果没有别的，你也可以和他们共享通用的语言。当然，这部分只是一个总结，并且也建议你钻研一些应用开发的知识，从而获得更加深入的理解。
+Given that Android's development API is unlike any other existing API, including anything found in the Linux world, it's important to spend some time understanding what "Android" looks like from the app developers' perspective, even though it's very different from what Android looks like for anyone hacking the AOSP. As an embedded developer working on embedding Android on device, you might not have to actually deal directly with the idiosyncracies of Android's app development API, but some of your colleagues might. If nothing else, you might as well share a common linguo with app developers. Of course, this section is merely a summary, and I recommend you read up on Android app development for more in-depth coverage.
+
+#### 安卓概念 Android Concepts
+
+应用开发人员在研发安卓应用时必须要掌握几个关键的概念。这些概念塑造了所有安卓应用的体系，并规范了开发人员什么能做，什么不能做。总的来说，它们把用户的生活变得更好，但有时也会遇到一些挑战。
+Application developers must take a few key concepts into account when developing Android apps. These concepts shape the architecture of all Android apps and dictate what developers can and cannot do. Overall, they make the users' life better, but they can sometimes be challenging to deal with.
+
+##### 组件 components
+
+安卓应用程序由一些零散而有联系的组件构成。一个应用程序的组件可以授权使用或使用另一个应用的组件。最重要的是，这里面并没有如**main()**一样单一入口点之类的东西。相反，开发人员使用一个叫做*intent*的预定义事件将组件们联系在一起，从而在发生相应事件时激活它们的组件。一个简单的例子是处理用户联系人数据库的组件，当用户按下拨号器或其他程序的联系人按钮时会被激活。所以一个应用程序可以拥有与它组件相同数量的入口点。
+Android applications are made of loosely-tied *components*. Components of one app can invoke/use components of other apps. Most importantly, there is no single entry point to an Android app: no **main()** function or any equivalent. Instead, there are pre-defind events called *intents* that developers can tie their components to, thereby enabling their components to be activated on the occurrence of the corresponding events. A simple example is the component that handles the user's contacts database, which is invoked when the user presses a Contacts button in the Dialer or another app. An app therefore can have as many entry points as it has components.
+
+安卓的四大组件如下：
+There are four main types of components:
+
+>*活动* *Activities*
+正如“窗体”在基于视窗用户界面的系统中作为主要的视觉交互构建块一样，活动就是安卓应用的构建块。但不同于窗体，活动不能够被“最大化”，“最小化”或者“调整大小”。反之，活动永远占据整个视觉区域，堆叠在其他活动的顶端。并类似浏览器记录网页访问序列那样允许用户“返回”之前的地方。事实上，如之前章节所描述，所有的安卓设备都必须要有一个“BACK”键来指示用户操作行为。与浏览器不同的是，并不存在一个“前进”按钮，活动只允许“返回”。
+Just as the "window" is the main building block of all visual interaction in window-based GUI system, acitvites are the building block in an Android app. Unlike a window, however, activities cannot be "maximized," "minimized," or "resized." Instead, activities always take the entirety of the visual area and are made to be stacked up on top of each other in the same way as a browser remembers webpages in the sequence they were accessed, allowing the user to go "back" to where he was previously. In fact, as descirbed in the previous chapter, all Android devices must have a "BACK" button to mark this behavior available to the user. In contrast to web browsing, though, there is no button corresponding to the "forward" browsing action; only "back" is possible.
+另一个全局定义是安卓意图允许活动在应用启动器（手机的应用程序列表页）上展示一个图标。因为绝大多数的应用都希望被展示在主程序列表中，它们提供了至少一个活动去响应这个意图。一般而言，使用者将从一个特定 的活动开始，再移动到另一个活动，最后创建与这些活动相关的堆栈。这些活动组成的堆栈就是*任务*。用户可以通过点击HOME按键进入应用启动界面，启动另一个活动堆栈来切换一个新的任务。
+One globally defined Android intent allows an acitvity to be displayed as an icon on the app launcher (the main app list on a phone.) Because the vast majority of apps want to appear on the main app list, they provide at least one activity  that is defined as capable of responding to that intent. Typically, the user will start from a particular activity and move through other end up creating a stack of activities all related to the one they originally launched; this stack of activities is a *task*. The user can then switch to another task by clicking the HOME button and starting another activity stack from the app launcher.
+
+>*服务* *Services*
+安卓中的服务有些类似于Unix系中的后台进程或守护进程。本质上，服务在其他组件有需求是被激活的，并且一般会根据调用者的需求持续一段时间。最重要的是，服务可以被提供给从程序外的组件，从而为其他应用提供一些核心功能。服务激活时通常没有用户界面。
+Android services are akin to background processes or daemons in the Unix world. Essentially, a service is a activated when another component requires its services and typically remains active for the duration required by its caller. Most importantly, though, services can be made available to components outside an app, thereby exposing some of that app's core functionality to other apps. There is usually no visualsign of service being active.
+
+>*广播接收器* *Broadcast Receivers*
+广播接收器有点像中断处理程序。当一个关键事件发生时，广播接收器会被触发处理应用的行为。例如一个应用可能希望在低电或飞行模式（为了关闭无线连接）时得到通知。当不处理它们所注册的特殊事件时，广播接收器是不活动的。
+Broadcast receivers are akin to interrupt handlers. When a key event occurs, a broadcast receiver is triggered to handle that event on the app's behalf. For instance, an app might want to be notified when the battery level is low when "airplane mode" (to shut down the wireless connections) has been activated. When not handling a specific event for which they are registered, broadcast receivers are otherwise inactive.
+
+>*内容提供者* *Content Providers*
+内容提供者本质上就是数据库。一般来说一个应用会在需要为其他应用提供数据访问时包含一个内容提供者。例如开发一个Twitter客户端应用，你可以通过内容提供者给设备上的其他应用程序获取推送信息。大部分的内容提供者依赖安卓中的SQLite功能，但是也可以使用用户文件或者其他类型存储。
+Content providers are essentially databases. Usually, an app will include a content provider if it needs to make its data accessible to other apps. If you're building a Twitter client app, for instance, you could give other apps on the device access the tweet feed you're persenting to the user through a content provider. All content providers present the same API to apps, regardless of how they are actually implemented internally. Most content providers rely on the SQLite functionality included in Android, but they can also user files or other types of storage.
+
+##### 意图 Intents
+
+意图也是安卓中最为重要的概念之一。它们是允许组件间相互作用的后期绑定机制。应用开发人员可以通过发送意图的方式，让活动“浏览”一个网页或者PDF，因此即使活动本身不支持这类的能力，使用者也能够以这种形式实现。当然也有更魔幻的意图使用方式，只要开发人员想的话，可以发出一条特殊的意图拨打电话。
+Intents are one of the most important concepts in Android. They are the late-binding mechanisms that allow components to interact. An app developer could send an intent for an activity to "view" a web page or "view" a PDF, hence making it possible for the user to view a designated HTML or PDF document even if the requesting app itself doesn't include the capabilites to do so. More fancy use of intents is also possible. An app developer could, for instance, send a specific intent to trigger a phone call.
+
+可以将意图理解为一种不用预定义或需要特殊设计的目标组件和应用的多态Unix信号。意图本身是一种被动的对象，是内容（载荷），激发其的机制会与系统规则一起引导它的行为。例如其中的一个系统规则是意图与其被发送到的组件相关。就像被发送至服务的意图就只能够被服务接收，无法被活动或者广播接收器接收。
+Think of intents as polymorphic Unix signals that don't necessarily have to be predefined or require a specific designated target component or app. The intent itself is a passive object. It's contents (payload), the mechanism used to fire it along with the system's rules that will gate its behavior. One of the system's rules, for instance, is that intents are tied to the type of component they are sent to. An intent sent to a service, for example, can only be received by a service, not an activity or broadcast receiver.
+
+组件可以通过*manifast*的过滤被声明为处理特定的意图类型。系统随后将意图与过滤器匹配，并在运行时出发相应的组件。意图也能够发送给显式的过滤器，以绕过接收组件对意图声明的需求。但是，显式调用要求应用提前知道被指定的组件，这通常仅适用于同一个应用程序中的组件发送意图的情况。
+Components can be declared as capable of dealing with given intent types using filters in the *manifast* file. The system will thereafter match intents to that filter and trigger the corresponding component at runtime. An intent can also be sent to an explicit filter, bypassing the need to declare that intent within the receiving componnent's filter. The explicit invocation, though, requires the app to know about the designated component ahead of time, which typically applies only when intents are sent within comonents of hte same app.
+
+##### 组件的生命周期 Component Lifecycle
+
+安卓的另一个中心思想是用户不应该管理任务的切换。因此，安卓中并不会存在任务栏之类的功能。相反，用户可以随意启动应用程序，并通过点击HOME键后选择主界面上的其他应用来切换。这些被点击的应用可能是全新的，也可能是之前已经启动过的，即活动栈（也可以说任务）已经存在。
+Another central tenant of Android is that the user should never have to manage task switching. Hence, there is no task-bar or any equivalent functionality in Android. Instead, the user is allowed to start as many apps as he wants and "switch" between apps by clicking HOME to go to the home screen and clicking on any other app. The app he clicks may be an entirely new one, or one that he previously started and for which
+an activity stack (a.k.a. a "task") already exists.
+
+（corollary？）这种设计会导致应用程序逐渐消耗越来越多的系统资源，而这些资源不能保证操作永远继续下去。有些时候，系统会不得不回收一些最近较少使用或无优先级的组件来获取资源，留给新激活的组件使用。然而，资源回收应该对用户完全透明。换言之，当旧组件被新组件换下后，用户又回到原来的组件时，组件应该从它被换下的地方开始启动，就好像它一直在内存中等待一样。
+The corrollary to, or consequence of, this design decision is that apps gradually use up more and more system resources as they are started, which can't go on forever. At some point, the system will have to start reclaiming the resources of the least recently used or non-priority components in order to make way for newly-activated components. Yet still, this resource recycling should be entirely transparent to the user. In other words, when a component is taken down to make way for new one, and then the user returns to the original component, it should start up at the point where it was taken down and act as if it was waiting in memory all along.
+
+为了实现这个行为，安卓定义了一个标准生命周期组件。应用程序开发人员必须通过实现一系列与生命周期相关事件触发的组件回调，从而管理组件的生命周期。例如，当一个活动不再存在于前台（因此比在前台更容易被杀），它的**onPause()**回调则被触发。
+To make this behavior possible, Android defines a standard lifecycle components. An app developer must manage her components' lifecycle by implementing a series of callbacks for each component that are triggered by events related to the component lifecycle. For instance, when an activity is no longer in the foreground (and therefore more likely to be destroyed than if it's in the foreground), its **onPause()** callback is triggered.
+
+处理组件回调是应用开发人员最大的挑战之一，因为在处理关键事件时他们必须要小心地保存和恢复组件状态。最理想的结果是，用户不需要在应用间切换任务或担心开启新应用后之前的应用会被杀掉。
+Managing component lifecycles is one of the greatest challenges faced by app developers, because they must carefully save and restore component states on key transitional events. The desired end result is that the user never needs to "task switch" between apps or be aware that components from previously-used apps were destroyed to make way for new ones he started.
+
+##### Manifest文件 Manifest File
+如果一定要说一个应用中的“主”入口点，那么manifest文件可以算得上。基本上，它告诉了系统应用程序的组件，运行应用的要求，最小API等级以及硬件需求等等。Manifest格式像xml文件一样，以*AndroidManifest.xml*名称被保存在应用程序文件的最顶端目录中。应用的组件通常都是静态地描述在manifest中。事实上，除了广播接收器可以在运行时被动态注册，其余的组件都必须在构建时被声明在manifest文件中。
+If there has to be a "main" entry point to an app, the manifest file is likely it. Basically, it informs the system of the app's components, the capabilities required to run the app, the minimum level of the API required, any hardware requirements, etc. The manifest is formatted as an XML file and resides at the top-most directory of the app's sources as *AndroidManifest.xml*. The apps' components are typically all described statically in
+the manifest file. In fact, apart from broadcast receivers, which can be registered at runtime, all other components must be declared at build time in the manifest file.
+
+##### 进程与线程 Processses and Threads
+无论应用何时被激活，是由系统还是其他应用激活，都会起一个进程来容纳该应用的组件。除非开发人员重载了系统默认方法，否则初始组件起来之后所有的应用组件都会跑在同一个进程中。换句话说，一个应用的所有组件都会运行在单一的Linux进程里。因此，开发人员需要避免在标准组件中进行耗时或阻塞操作，并将这类操作放在线程中实现。
+Whenever an app's component is activated, whether it be by the system or another app, a process will be started to house that app's components. And unless the app developer does anything to overide the system defaults, all other components of that app that start after the initial component is activated will run within the same process as that component. In other words, all components of an app are comprised within a single Linux process. Hence, developers should avoid making long or blocking operations in standard components and use threads instead.
+
+而且，用户基本会允许激活任意数量的组件，基本上，这几个为包含用户组件的应用程序服务的Linux进程会一直存在于系统中。当运行太多进程导致无法无法启动新进程时，Linux内核将启动OOM机制。这时，安卓内核中的OOM将被调用，并会杀掉必须结束的进程以释放空间。
+And because the user is essentially allowed to activate as many components as he wants, several Linux processes are typically active at any time to serve the many apps containing the user's components. When there are too many processes running to allow for new ones to start, the Linux kernel's Out-Of-Memory (OOM) killing mechanisms will kick in. At that point, Android's in-kernel OOM handler will get called and it will determine which processes must be killed to make space.
+
+简而言之，安卓的整体行为取决于低内存情况。
+Put simply, the entirety of Android's behavior is predicated on low-memory conditions. 
+
+如果应用开发人员已经正确实现了组件的生命周期，这时应用的进程被OOM杀掉后，用户不会看到任何不良的行为。实际上，出于实际目的，用户甚至不会注意到容纳应用程序组件的进程消失，并且随后又会“自动”重新创建。
+If the developer of the app whose process is killed by Android's OOM handler has implemented his components' lifecycles properly, the user should see no adverse behavior. For all practical purposes, in fact, the user should not even notice that the process housing the app's components went away and got recreated "automagically" later.
+
+##### 远程过程调用（RPC） Remote Proceduce Calls (RPC)
+
+与系统中许多其他组件一样，安卓定义了它自己的RPC/IPC（IPC-进程间通信）机制：Binder。所以跨组件通信不是使用典型的系统IPC或套接字实现，而是通过访问/dev/binder的方式使用内核Binder机制，这部分会在本章稍后部分介绍。
+Much like many other components of the system, Android defines its own RPC/IPC mechanism: Binder. So communication across components is not done using the typical System V IPC or sockets. Instead, components use the in-kernel Binder mechanism, accessible through /dev/binder, which will be covered later in this chapter.
+
+应用开发人员并不会直接使用Binder机制，相反，他们必须使用安卓的接口描述语言（IDL）。接口描述通常保存在一个.aidl文件中，由aidl工具处理生成适当的存根，使用binder机制传输数据，以及在传输对象的要求下编组和解编代码。
+App developers, however, do not use the Binder mechanism directly. Instead, they must define and interact with interfaces using Android's Interface Definition Language (IDL). Interface definitions are usually stored in an .aidl file and are processed by the aidl tool to generate the proper stubs and marshalling/unmarshalling code required to transfer objects and data back and forth using the Binder mechanism.
+
+#### 框架介绍 Framework Intro
+
+除了之前讨论的概念之外，安卓还定义了自己的开发框架，它允许开发人员在其他开发框架中访问基本功能。我们来看一看这个框架以及它的能力。
+In addition to the concepts we just discussed, Android also defines its own development framework, which allows developers to access functionality typically found in other development frameworks. Let's take a brief look at this framework and its capabilities.
+
+*用户接口* *User Interface*
+
+安卓的UI元素包含了如按钮，文本框，对话框，菜单和事件处理这些传统控件。如果开发人员使用过其他UI框架，那么接触这部分接口相对简单。
+UI elements in Android include traditional widgets such as buttons, text boxes, dialogs, menus, and event handlers. This part of the API is relatively straight-forward and developers usually find their way around it fairly easily if they've already coded for any other UI framework.
+
+安卓中所有的UI对象都是继承于**View**类，并组织在**ViewGroup**的层次结构中。一个活动的UI可以静态地在XML（也是最常用的方法）中定义，也可以在java中动态声明。如果需要的话，也可以在运行时由java修改。一个活动的UI会在其处于**ViewGroup**顶部时才会显示。
+All UI objects in Android are built as descendants of the **View** class and are organized within a hierarchy of **ViewGroup**s. An activity's UI can actually be specified either statically in XML (which is the usual way) or declared dynamically in Java. The UI can also be modified at runtime in Java if need be. An activity's UI is displayed when its content is set as the root of a **ViewGroup** hierarchy.
+
+*数据存储* *Data Storage*
+
+安卓为开发人员提供了多种数据存储选项。对于简单的存储需求，安卓提供了shared preferences，允许将密钥对值保存在所有组件共享的组件或特定的单独文件中。开发者也可以直接操作这些文件，文件由应用程序私下存储，所以其他程序可能无法读写。应用开发人员也可以使用安卓中的SQLite管理自己的私有数据库。其他应用可以通过内容提供者组件来访问这些数据库。
+Android presents developers with several storage options. For simple storage needs, Android provides shared preferences, which allows developers to store keypair values either in a data-set shared by all components of the app or within a specific separate file. Developers can also manipulate files directly. These files may be stored privately by the app, and therefore inaccessible to other apps, or made readable and/or writeable by other apps. App developers can also use the SQLite functionality included in Android to manage their own private database. Such a database can then be made available to other apps by hosting it within a content provider component.
+
+*安全和权限* *Security and Permissions*
+
+安卓的安全是在进程级别的。换言之，安卓依赖Linux现有的进程隔离机制来实现自己的策略。为此，每个应用安装后都会获得自己的UID个GID。本质上就像每个应用都是系统中单独的用户一样。在多任务的Unix系统中，如果没有明确的权限授权，“用户”们不能够访问彼此的资源。实际上，每个应用都运行在独立的沙盒中。
+Security in Android is enforced at the process level. In other words, Android relies on Linux's existing process isolation mechanisms to implement its own policies. To that end, every app installed gets its own UID and GID. Essentially, it's as if every app is a separate "user" in the system. And as in any multi-user Unix system, these "users" cannot access each others' resources unless permissions are explicitely granted to do so. In effect, each app lives in its own separate sandbox.
+
+要离开沙盒并访问关键的系统功能或资源，应用必须要使用安卓权限机制。这就需要开发人员在manifest文件中静态地声明应用所需的权限。如访问互联网（即使用套接字）、拨打电话或使用摄像头都需要由安卓去预先定义。其他权限可由开发者声明，为其他应用与指定应用之间的组件交互。当应用安装之后，提示用户批准应用程序所需的权限。
+To exit the sandbox and access key system functionality or resources, apps must use Android's permission mechanisms, which require developers to statically declare the permissions needed by an app in its manifest file. Some permissions, such as the right to access the Internet (i.e. use sockets), dial the phone, or use the camera, are predefined by Android. Other permissions can be declared by app developers and then be required for other apps to interact with a given app's components. When an app is installed, the user is prompted to approve the permissions required to run an app.
+
+Access enforcement is based on per-process operations and requests to access a specific URI, and the decision to grant access to a specific functionality or resource is based on certificates and user prompts. The certificates are the ones used by app developers to sign the apps they make available on the Android Market. Hence, developers can restrict access to their apps' functionality to other apps they themselves created in the past.
+
+安卓开发框架提供了更多功能，当然不是这小节内容涵盖得了的。这部分内容可以阅读其他安卓应用开发的相关信息，或者访问[developer.android.com](developer.android.com)获取更多关于2D、3D图像，多媒体，定位及地图，蓝牙，NFC等内容。
+The Android development framework provides a lot more functionality, of course, than can be covered here. I invite you to read up on Android app development elsewhere or visit [developer.android.com](developer.android.com) for more information on 2D and 3D graphics, multi-media, location and maps, Bluetooth, NFC, etc.
+
+#### 应用开发工具 App Development Tools
+
+这段我不想翻了
+The typical way to develop Android applications is to use the freely available Android Software Development Kit (SDK). This SDK, along with Eclipse, its corresponding Android Development Tools (ADT) pulgin, and the QEMU-based emulator in the SDK, allow developers to do the vast majority of development work straight from their workstation. Developers will also usually want to test their app on real devices prior to making it availbale on the Android Market, as there usually are runtime behavior differences between the emulator and actual devices. Some software publishers take this to the extreme and test their apps on several dozens of devices before shipping a new release.
+
+就算你不想为你的嵌入式系统开发任何应用，还是强烈建议你在工作站上搭建应用开发环境。这也方便编写测试应用验证AOSP修改的影响。如果计划扩展AOSP的API并且创建和发布自己的SDK，这也是必不可少的。
+Even if you aren't going to plan to develop any apps for your embedded system, I highly suggest you set up the development environmnet used by app developers on you  workstation. If nothing else, this will allow you to validate the effects of modifications you make to the AOSP using basic test applications. It will also be essential if you plan on extending the AOSP's API and therefore create and distribute your own cusion SDK.
+
+搭建应用开发环境可以参考之前网站中谷歌给出的手册，顺便推销一下自己的另一本书。
+To set up an app development environment, follow the instructions provided by Google at the developer kit site just mentioned, or have a look at the book *Learning Andriod* (O'Reilly).
+
+#### 原生开发 Native Development
+
+事实上，绝大部分的应用都是在我们刚才讨论的环境中使用java所开发的，有的开发者也需要运行原生的C代码。为此，谷歌提供了原生开发工具包（NDK）。正如宣传的那样，这主要是为了让游戏开发者们挤出设备最后一丝性能。因此，NDK中的API主要提供图形渲染以及传感器方面的功能。例如极为出名的游戏——愤怒的小鸟，就非常依赖原生代码。
+While the majority of apps are developed exclusively in Java using the development environment we just discussed, certain developers need to run some C code natively. To this end, Google has made the Native Development Kit (NDK) available to developers. As advertized, this is mostly aimed at game developers needing to squeeze every last possible bit of performance out of the device their game is running on. And as such, the APIs made available within the context of the NDK are mostly geared towards graphics rendering and sensor input retrieval. The infamous Angry Birds game, for example, relies heavily on code running natively.
+
+另一个可能用到NDK的情景是将现有的代码库移植到安卓上。如果你手上是开发了多年的古老C代码（对于开发了其他移动应用的工作室来说十分常见），并不希望把这些东西再用java重写一遍。相反，你可以使用NDK编译之后打包到java代码中，并通过SDK的方式提供给安卓使用。例如安卓上的火狐浏览器，就非常依赖NDK去运行那部分历史代码。
+Another possible use of the NDK is obviously to port over an existing codebase to Android. If you've developed a lot of legacy C code over several years (a common situation for development houses that have created applications for other mobile devices), you won't necessarily want to rewrite it in Java. Instead, you can use the NDK to compile it for Android and package it with some Java code to use some of the more Android-specific functionality made available by the SDK. The Firefox browser, for instance, relies heavily on the NDK to run some of its legacy code on Android.
+
+使用NDK的好处是可以通过SDK的形式将java代码与C代码结合使用。也正如刚才暗示的，NDK能够提供的仅仅是安卓API中有限的子集。比如你无法在NDK编译的C代码中发出一个意图，必须由java编写的SDK来做这件事情。需要提醒的是，NDK提供的API主要面向游戏开发人员。
+As I just hinted, the nice thing about the NDK is that you can combine it with the SDK and therefore have part of your app in Java and parts of your app in C. That said, it's crucial to understand that the NDK gives you access only to a very limited subset of the Android API. There is, for instance, no way to presently send an intent from within C code compiled with the NDK; the SDK must be used to do it in Java instead. Again, the APIs made available through the NDK are mostly geared towards game development.
+
+有时嵌入式及系统开发人员希望通过NDK在安卓上完成一些平台级的工作。NDK中的“原生”一词或许在这里有一些误导，因为使用NDK时还需涉及到刚才所说对开发人员的限制和要求。所以对嵌入式开发者而言，请记住，NDK为应用开发人员在java中调用C代码提供了极大的帮助。除此之外，NDK对你所承担的工作类型几乎毫无用处。
+Sometimes embedded and system developers coming to Android expect to be able to use the NDK to do platform-level work. The word "native" in the NDK can be misleading in that regard, because the use of the NDK still involves all of the limitations and requirements that I've said to apply to Java app developers. So, as an embedded developer, remember that the NDK is useful for app developers to run C code that they can call from their Java code. Apart from that, the NDK will be of little to no use for the type of work you are likely to undertake.
+
+### 总体结构 Overall Architecture
+![图 2-1. 安卓系统架构](https://upload-images.jianshu.io/upload_images/2424151-0348fb02f2a6898b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+图2-1可能会是本书中最重要的一张图表，建议你想办法在这里放个书签，因为我们会经常应用这张图片。尽管这是个简化的视图，当然我们有机会去丰富它，但它为安卓各个部分如何搭配在一起，以及总体结构提供了一个很好的概念。
+Figure 2-1 is probably one of the most important diagrams presented in this book, and I suggest you find a way to bookmark its location as we will often refer back to it, if not explicitly then implicitely. Although it's a simplified view—and we will get the chance to enrich it as we go—it gives a pretty good idea of Android's architecture and how the various bits and pieces fit together.
+
+如果你熟悉Linux开发，第一件让你震惊的事情应该是，除了Linux内核本身，这一部分几乎没有什么Linux/Unix世界中常见的东西。没有glibc，没有X Window系统，没有GTK也没有BusyBox。很多Linux和嵌入式Linux老鸟确实感到安卓比较陌生。尽管安卓还是从完全干净的状态开始跑用户空间，我们会讨论如何将“遗留”或“经典”Linux应用和效应与安卓堆栈共存。
+If you are familiar with some form of Linux development, the first thing that should strike you is that beyond the Linux kernel itself, there is little in that stack that resembles anything typically seen in the Linux or Unix world. There is no glibc, no X Window System, no GTK, no BusyBox, and so on. Many veteran Linux and embedded Linux practitioners have indeed noted that Android feels very alien. Though the Android stack starts from a clean slate with regards to user-space, we will discuss how to get "legacy" or "classic" Linux applications and utilities to coexist side-by-side with the Android stack.
+
+让我们深入到安卓架构的每个部分，从图2-1底部开始往上研究，一旦完成了对各个组件的处理，我们将通过总览系统启动过程来结束这一章节。
+Let's take a deeper look into each part of Android's architecture, starting from the bottom of Figure 2-1 and going up. Once we are done covering the various components, we'll end this chapter by going over the system's startup process.
+
+### Linux内核 Linux Kernel
+
+Linux内核是所有传统上标记为Linux发行版的中心部分，包含了如Ubuntu、Fedora、Debian这些主流发行版。
+The Linux kernel is the center-piece of all distributions traditionally labeled as "Linux," including mainstream distributions such as Ubuntu, Fedora, and Debian. And while it's available in "vanilla" form from the Linux Kernel Archives, most distributions apply their own patches to it to fix bugs and enhance the performance or customize the behavior of certain aspects of it before distributing it to their users. Android, as such, is no different in that the Android developers patch the "vanilla" kernel to meed their needs.
