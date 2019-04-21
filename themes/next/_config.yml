@@ -144,7 +144,8 @@ links_icon: link
 links_title: Links
 links_layout: block
 #links_layout: inline
-#links:
+links:
+  Madoka酱: https://yarrow1995.github.io/
   #Title: http://example.com/
 
 # Sidebar Avatar
