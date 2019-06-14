@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Arch Linux," />
+  <meta name="keywords" content="C/C++,cryptography,Feistel," />
 
 
 
@@ -79,18 +79,20 @@
 
 
 
-<meta name="description" content="很显然，这是一篇梗文 从16年11月开始写S.M.A.R.T.项目的主框架，直到答辩结束都一直没太敢更新arch。一来是怕万一滚挂了什么奇奇怪怪的依赖，恢复一下还是要花些时间的；二来呢，沉迷叛乱之后很少切linux了，工作日下班回来基本不太开电脑，周末就在 push push push 中度过 所以时隔一年半，这次 sudo pacman -Syu 果然还是出了不少问题：fcitx输入法全挂、gn">
-<meta name="keywords" content="Arch Linux">
+<meta name="description" content="Feistel作为现代密码学中构造分组密码的常用对称结构，我很肯定老师在课上重点分析过。对于这个结构，记忆中一直是模糊的位或、16轮、F函数和纠缠在一起的交叉箭头。想来自己的memory palace也是够奇怪了，居然把feistel和round绑在了一起。直到前段时间无聊搞搞ECU通信加密TEA算法玩，看到图解分析的“1 round”才猛然想起feistel，却又记不起基础理论和实现细节。可能当">
+<meta name="keywords" content="C&#x2F;C++,cryptography,Feistel">
 <meta property="og:type" content="article">
-<meta property="og:title" content="我能吞下玻璃而不伤身体">
-<meta property="og:url" content="http://yoursite.com/2018/05/05/我能吞下玻璃而不伤身体/index.html">
+<meta property="og:title" content="Feistel密码结构">
+<meta property="og:url" content="http://yoursite.com/2019/05/13/Feistel-cryptography-architecture/index.html">
 <meta property="og:site_name" content="二又三">
-<meta property="og:description" content="很显然，这是一篇梗文 从16年11月开始写S.M.A.R.T.项目的主框架，直到答辩结束都一直没太敢更新arch。一来是怕万一滚挂了什么奇奇怪怪的依赖，恢复一下还是要花些时间的；二来呢，沉迷叛乱之后很少切linux了，工作日下班回来基本不太开电脑，周末就在 push push push 中度过 所以时隔一年半，这次 sudo pacman -Syu 果然还是出了不少问题：fcitx输入法全挂、gn">
+<meta property="og:description" content="Feistel作为现代密码学中构造分组密码的常用对称结构，我很肯定老师在课上重点分析过。对于这个结构，记忆中一直是模糊的位或、16轮、F函数和纠缠在一起的交叉箭头。想来自己的memory palace也是够奇怪了，居然把feistel和round绑在了一起。直到前段时间无聊搞搞ECU通信加密TEA算法玩，看到图解分析的“1 round”才猛然想起feistel，却又记不起基础理论和实现细节。可能当">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-11-10T03:44:59.326Z">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2019/06/33fb9c16eb1d9580.png">
+<meta property="og:updated_time" content="2019-06-14T15:57:54.610Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="我能吞下玻璃而不伤身体">
-<meta name="twitter:description" content="很显然，这是一篇梗文 从16年11月开始写S.M.A.R.T.项目的主框架，直到答辩结束都一直没太敢更新arch。一来是怕万一滚挂了什么奇奇怪怪的依赖，恢复一下还是要花些时间的；二来呢，沉迷叛乱之后很少切linux了，工作日下班回来基本不太开电脑，周末就在 push push push 中度过 所以时隔一年半，这次 sudo pacman -Syu 果然还是出了不少问题：fcitx输入法全挂、gn">
+<meta name="twitter:title" content="Feistel密码结构">
+<meta name="twitter:description" content="Feistel作为现代密码学中构造分组密码的常用对称结构，我很肯定老师在课上重点分析过。对于这个结构，记忆中一直是模糊的位或、16轮、F函数和纠缠在一起的交叉箭头。想来自己的memory palace也是够奇怪了，居然把feistel和round绑在了一起。直到前段时间无聊搞搞ECU通信加密TEA算法玩，看到图解分析的“1 round”才猛然想起feistel，却又记不起基础理论和实现细节。可能当">
+<meta name="twitter:image" content="https://i.bmp.ovh/imgs/2019/06/33fb9c16eb1d9580.png">
 
 
 
@@ -120,13 +122,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/05/我能吞下玻璃而不伤身体/"/>
+  <link rel="canonical" href="http://yoursite.com/2019/05/13/Feistel-cryptography-architecture/"/>
 
 
 
 
 
-  <title>我能吞下玻璃而不伤身体 | 二又三</title>
+  <title>Feistel密码结构 | 二又三</title>
   
 
 
@@ -253,7 +255,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/05/我能吞下玻璃而不伤身体/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/13/Feistel-cryptography-architecture/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Ross Zeng">
@@ -270,7 +272,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">我能吞下玻璃而不伤身体</h1>
+          <h1 class="post-title" itemprop="name headline">Feistel密码结构</h1>
         
 
         <div class="post-meta">
@@ -282,8 +284,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-05T14:01:00+08:00">
-                2018-05-05
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-13T23:45:42+08:00">
+                2019-05-13
               </time>
             
 
@@ -320,17 +322,28 @@
       
 
       
-        <p>很显然，这是一篇梗文</p>
-<p>从16年11月开始写S.M.A.R.T.项目的主框架，直到答辩结束都一直没太敢更新arch。一来是怕万一滚挂了什么奇奇怪怪的依赖，恢复一下还是要花些时间的；二来呢，沉迷叛乱之后很少切linux了，工作日下班回来基本不太开电脑，周末就在 push push push 中度过</p>
-<p>所以时隔一年半，这次 sudo pacman -Syu 果然还是出了不少问题：fcitx输入法全挂、gnome-control-center点不开，倒是gnome扩展让人感到很稳定，反正每次更新都挂每次都要重装。</p>
-<p>首先是终端字体堆叠，等宽设置成文泉驿 Micro Hei Mono Rregular 基本ok，不过貌似影响了终端窗口大小</p>
-<p>大问题是fcitx挂了，以往输入法一直都在，所以碰到什么问题随手一搜，解决到能用就行从不做记录。而这次的现象是fcitx中没有候选输入法可以选，怎么样都调不出输入设置。Wiki是个好东西，所以引一下arch fcitx wiki中所说：</p>
-<h5 id="首先诊断问题所在"><a href="#首先诊断问题所在" class="headerlink" title="首先诊断问题所在"></a>首先诊断问题所在</h5><blockquote>
-<p>当你遇到任何 fcitx 有关的问题，比如 ctrl+space 在有的程序中不能工作，首先应该用 fcitx-diagnose 命令诊断问题的原因。 fcitx-diagnose 会列出所有 fcitx 正常运行所需的前提条件，从输出结果中通常可以找到问题的原因。 在网上（比如在 irc 或者论坛里）询问别人关于 fcitx 配置的问题时，也请首先提供你的 fcitx-diagnose 输出结果（比如贴到 pastebin 服务），这将加速别人帮你找到问题所在</p>
+        <p>Feistel作为现代密码学中构造分组密码的常用对称结构，我很肯定老师在课上重点分析过。对于这个结构，记忆中一直是模糊的位或、16轮、F函数和纠缠在一起的交叉箭头。想来自己的memory palace也是够奇怪了，居然把feistel和round绑在了一起。直到前段时间无聊搞搞ECU通信加密TEA算法玩，看到图解分析的“1 round”才猛然想起feistel，却又记不起基础理论和实现细节。可能当初手算AES shiftrow mixcolumn留下的心里阴影太大，轰塌了DES大楼，行移位列混淆轮密钥加真<sup>TM</sup>琅琅上口。一般教材进入现代密码学首先会介绍分组密码，尤以feistel密码结构为例，进而讲解DES的设计原理。如DES中所做的代换为了使密文唯一而可逆；扩散（P盒）能够弥补古典密码难以抵抗统计分析的弱点；混淆（S盒）则通过打乱密文与密钥的关系来保护密钥。文章中不打算详细分析分组密码，仅对feistel结构及用到相似设计的算法理解做一点记录。</p>
+<a id="more"></a>
+<p>Feistel密码的命名来自分组密码加密技术的先驱Horst Feistel，这是一条加密方案设计的通用原则，而并非特定的密码方案。一个典型的加解密示意如下图：<br><img src="https://i.bmp.ovh/imgs/2019/06/33fb9c16eb1d9580.png" alt="Feistel struct"></p>
+<p>明文P被分为等长的左右两部分，右半部分R<sub>0</sub>与该轮子密钥K经过F函数运算后，再与左半部分L<sub>0</sub>做异或运算，最终结果作为下一轮的右半部分输入R<sub>1</sub>；同时右半部分R<sub>0</sub>直接作为下一轮左半部分输入L<sub>1</sub>，这样的一次运算称为一轮。以2 round 1 feistel来描述这个算法，为描述统一增加最后一次左右调换。<br>加密运算：<br>L<sub>1</sub> = R<sub>0</sub><br>R<sub>1</sub> = L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)<br>L<sub>2</sub> = R<sub>1</sub> = L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)<br>R<sub>2</sub> = L<sub>1</sub> &oplus; F(R<sub>1</sub>， K<sub>1</sub>) = R<sub>0</sub> &oplus; F(L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)， K<sub>1</sub>)<br>L<sub>3</sub> = R<sub>2</sub> = R<sub>0</sub> &oplus; F(L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)， K<sub>1</sub>)<br>R<sub>3</sub> = L<sub>2</sub> = L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)<br>解密时子密钥倒序使用：<br>L<sub>3</sub> = R<sub>2</sub> = L<sub>1</sub> &oplus; F(R<sub>1</sub>， K<sub>1</sub>) = R<sub>0</sub> &oplus; F(L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)， K<sub>1</sub>)<br>R<sub>3</sub> = L<sub>2</sub> = R<sub>1</sub> = L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>)<br>L<sub>2</sub> = R<sub>3</sub><br>R<sub>2</sub> = L<sub>3</sub> &oplus; F(R<sub>3</sub>, K<sub>1</sub>) = (R<sub>0</sub> <del>&oplus; F(L<sub>0</sub> &oplus; F(R<sub>0</sub>， K<sub>0</sub>), K<sub>1</sub>)) &oplus; F(L<sub>0</sub> &oplus; F(R<sub>0</sub>, K<sub>0</sub>), K<sub>1</sub>)</del> = R<sub>0</sub><br>L<sub>1</sub> = R<sub>2</sub> = R<sub>0</sub><br>R<sub>1</sub> = L<sub>2</sub> &oplus; F(R<sub>2</sub>, K<sub>0</sub>) = (L<sub>0</sub> <del>&oplus; F(R<sub>0</sub>， K<sub>0</sub>)) &oplus; F(R<sub>0</sub>, K<sub>0</sub>)</del> = L<sub>0</sub><br>L<sub>0</sub> = R<sub>1</sub><br>R<sub>0</sub> = L<sub>1</sub>        </p>
+<!--
+TODO 
+2 Round 1 Feistel 示意图
+-->
+<p>有关feistel的本质理解，<a href="https://www.cnblogs.com/luop/p/4366902.html" target="_blank" rel="noopener">cnblogs</a>里看到过这么一段话：</p>
+<blockquote>
+<p>但是对于Feistel结构最本质的特点到底是什么，我也一直不太明白，比较浅显的一点认识就是：每一轮只有一半的比特位参与计算，另外一半直接作为下一轮的输入。</p>
 </blockquote>
-<p>仔细看了下fcitx-diagnose输出，发现之前对GTK和QT的设置居然一直都是错的( ╯-_-)╯┴—┴，果然是以前盲从网上解法不认真看官方wiki，在xim里多写了一对双引号。。。</p>
-<p>系统设置打不开，后来用 ps -ef | grep xxx 强杀之后重启ok</p>
-<p>记录下常用的几个gnome扩展 Dash to Dock， System Monitor， NetSpeed Master</p>
+<p>根据算法流程，对于每一轮i迭代输入，左右两边上一轮i-1的输出计算方式如下（以K<sub>i</sub>作为第i轮的子密钥）<br>L<sub>i</sub> = R<sub>i-1</sub><br>R<sub>i</sub> = L<sub>i-1</sub> &oplus; F(R<sub>i-1</sub>， K<sub>i</sub>)<br>所以严格来说，每轮中<strong>左右两半的比特位都</strong>参与了运算（异或与F函数），其中一半同时也会直接作为下一轮的输入，但<strong>每轮中仅有一半的比特位发生了变化</strong>。</p>
+<p>Feistel的设计非常精妙，加解密过程使用完全一样的结构，仅初始输入与子密钥调用顺序有区别，所以其加密核心F函数就无需可逆。在软硬件实现上减少了一半的成本。</p>
+<h4 id="那么写写代码巩固下理论知识"><a href="#那么写写代码巩固下理论知识" class="headerlink" title="那么写写代码巩固下理论知识"></a>那么写写代码巩固下理论知识</h4><p>DES加密算法作为使用feistel结构的典型应用，其F函数做了扩展运算、P盒与S盒，完整解析相对复杂。这篇文章主旨还是对feistel的总结，所以选择一个更加轻量、F函数更简单的TEA算法作为示例来用C实现一遍。但是TEA在加解密中所用的F函数是不同的，见<a href="https://www.bbsmax.com/A/Vx5M9wrv5N/" target="_blank" rel="noopener">这篇</a></p>
+<blockquote>
+<p>关于TEA算法，有种有意思的情况值得引起注意，那就是这个算法不是Feistel密码结构，所以需要分别独立地加密和解密例程。不过，TEA算法在尽可能地接近Feistel密码结构，虽然实际上它并不是–TEA算法使用加法和减法取代了异或运算</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;&gt;</span></span></span><br></pre></td></tr></table></figure>
+<p>也可以自己构造F函数</p>
+<p>要明确，feistel是一类密码结构，并不是某种特定的密码算法。实际上，对于feistel结构而言，不同的F函数就意味着不同的密码算法。<br>所以可以试着写一个很弱鸡的F函数</p>
+<p>Feistel在很多经典的密码算法中都有用到。</p>
 
       
     </div>
@@ -348,7 +361,11 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Arch-Linux/" rel="tag"># Arch Linux</a>
+            <a href="/tags/C-C/" rel="tag"># C/C++</a>
+          
+            <a href="/tags/cryptography/" rel="tag"># cryptography</a>
+          
+            <a href="/tags/Feistel/" rel="tag"># Feistel</a>
           
         </div>
       
@@ -361,8 +378,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/03/18/Embedded-Android-Chapter1/" rel="next" title="Embedded Android -- Chapter1">
-                <i class="fa fa-chevron-left"></i> Embedded Android -- Chapter1
+              <a href="/2019/02/26/north-by-northeast/" rel="next" title="哈尔滨、黑河以及我们谈论的北方">
+                <i class="fa fa-chevron-left"></i> 哈尔滨、黑河以及我们谈论的北方
               </a>
             
           </div>
@@ -370,10 +387,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/11/10/Embedded-Android-Chapter2/" rel="prev" title="Embedded Android -- Chapter2">
-                Embedded Android -- Chapter2 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -454,7 +467,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-count">9</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -542,7 +555,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#首先诊断问题所在"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x9996;&#x5148;&#x8BCA;&#x65AD;&#x95EE;&#x9898;&#x6240;&#x5728;" class="headerlink" title="&#x9996;&#x5148;&#x8BCA;&#x65AD;&#x95EE;&#x9898;&#x6240;&#x5728;"></a>&#x9996;&#x5148;&#x8BCA;&#x65AD;&#x95EE;&#x9898;&#x6240;&#x5728;</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#那么写写代码巩固下理论知识"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x90A3;&#x4E48;&#x5199;&#x5199;&#x4EE3;&#x7801;&#x5DE9;&#x56FA;&#x4E0B;&#x7406;&#x8BBA;&#x77E5;&#x8BC6;" class="headerlink" title="&#x90A3;&#x4E48;&#x5199;&#x5199;&#x4EE3;&#x7801;&#x5DE9;&#x56FA;&#x4E0B;&#x7406;&#x8BBA;&#x77E5;&#x8BC6;"></a>&#x90A3;&#x4E48;&#x5199;&#x5199;&#x4EE3;&#x7801;&#x5DE9;&#x56FA;&#x4E0B;&#x7406;&#x8BBA;&#x77E5;&#x8BC6;</span></a></li></ol></div>
             
 
           </div>
