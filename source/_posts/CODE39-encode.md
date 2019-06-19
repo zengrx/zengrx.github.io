@@ -8,7 +8,7 @@ tags:
 - 穿戴类
 ---
 
-![_20181223_014005.JPG](https://upload-images.jianshu.io/upload_images/2424151-455a09e95a4b1078.JPG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://i.bmp.ovh/imgs/2019/06/544ba965d4dcd24c.jpg)
 
 
 #### 0x00 产线很重要
@@ -34,7 +34,7 @@ The Code 39 specification defines 43 characters, consisting of uppercase letters
 + 九个元素是三宽（二进制值的1）六窄（二进制值的0）
 + 宽窄比例并不严格，介于1:2与1:3之间即可
 
-![Code_39_barcode](https://upload-images.jianshu.io/upload_images/2424151-a7c58f4c4de8a4ca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Code_39_barcode](https://i.bmp.ovh/imgs/2019/06/17708573716c297f.png)
 
 最终在代码实现中抽象出的数据结构与上图还是有些不同，如维基百科中所描述的，条形和空格的粗细的概念就需要具现出来。
 
@@ -42,7 +42,7 @@ The Code 39 specification defines 43 characters, consisting of uppercase letters
 首先抽象数据结构，编码过程字符映射为条码，将字符编为二进制编码，再将编码转化为黑白相间的图案。解码则为编码的逆过程，扫码枪扫描到图案后解析黑白的二进制值，将这个值转化为编码内容，继而对应到字符内容。
 
 以A为例
-![A.png](https://upload-images.jianshu.io/upload_images/2424151-9861867dc030d352.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![A.png](https://i.bmp.ovh/imgs/2019/06/662b850047aa3581.png)
 
 100001001 （条码编码，1宽0窄）
 取窄宽比为1:2
