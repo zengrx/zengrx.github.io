@@ -62,7 +62,7 @@ XTEA的加密过程如下图所示
 ```C
 // 加密函数
 // 输入数据为32x2=64 bits 输入密钥位32x4=128 bits
-// 魔术字delta使用黄金比例值的32 bits表示
+// 魔术字delta使用黄金比例值的32 bits表示 -> 0.618 * 2^32
 void encipher(unsigned int num_rounds, uint32_t v[2], uint32_t const key[4]) {
     unsigned int i;
     uint32_t v0 = v[0], v1 = v[1], sum = 0, delta = 0x9E3779B9;
@@ -119,7 +119,7 @@ int main()
 }  
 ```
 
-输出结果
+**输出结果**
 > + 加密前原始数据：6 7    
 HEX format：0x0006 0x0007    
 加密后的数据：4284586257 1255763364    
@@ -142,11 +142,77 @@ HEX format：0x6666 0x7777
 
 #### 密码学不要自己造轮子
 
-要明确，feistel是一类密码结构，并不是某种特定的密码算法。实际上，对于feistel结构而言，不同的F函数就意味着不同的密码算法。
-所以可以试着写一个很弱鸡的F函数
-密码学不要自己造轮子
+Feistel在很多经典的密码算法中都有用到。要明确，feistel是一类密码结构，并不是某种特定的密码算法。实际上，对于feistel结构而言，不同的F函数就意味着不同的密码算法。我来写一个很弱鸡的F函数充当反面教材。
 
-Feistel在很多经典的密码算法中都有用到。
+做8轮计算，最后把左右输出交换。加解密时调用函数是相同的，但各轮中输入的密钥需要倒序。
+
+![laji_feistel](https://i.bmp.ovh/imgs/2019/06/30bc2625888fc49c.png)
+
+```C
+#include <stdint.h>
+#include <stdio.h>
+
+/* take 64 bits of data in v[0] and v[1] and 128 bits of key[0] - key[3] */
+void encipher(unsigned int num_rounds, uint32_t v[2], uint32_t const key[4])
+{
+    unsigned int i;
+    uint32_t L = v[0], R = v[1], tmp = 0;
+    printf("origin v0 is %d, v1 is %d\n", L, R);
+    for (i = 0; i < num_rounds; i++)
+    {
+        tmp = R;
+        R = (((R >> 4) + key[i] << 5) ^ L);
+        L = tmp;
+        printf("v0 is %d, v1 is %d\n", L, R);
+    }
+    v[0] = R; v[1] = L;
+}
+
+int main()
+{
+    uint32_t key[]   = {0x0055, 0x0006, 0x4569, 0x9994, 0x1234, 0x0325, 0x1206, 0x0227};
+    uint32_t key1[]  = {0x0227, 0x1206, 0x0325, 0x1234, 0x9994, 0x4569, 0x0006, 0x0055};
+    uint32_t data[2] = {0x6666, 0x7777};
+    //uint32_t data[2] = {6, 7};
+    unsigned int round = 8;
+    printf("加密前原始数据：%u %u\n", data[0], data[1]);
+    printf("HEX format：0x%04x 0x%04x\n", data[0], data[1]);
+    encipher(round, data, key);
+    printf("加密后的数据：%u %u\n", data[0], data[1]);
+    printf("HEX format：0x%04x 0x%04x\n", data[0], data[1]);
+    encipher(round, data, key1);
+    printf("解密后的数据：%u %u\n", data[0], data[1]);
+    printf("HEX format：0x%04x 0x%04x\n", data[0], data[1]);
+    return 0;
+} 
+```
+
+**输出结果**
+> + 加密前原始数据：26214 30583      
+HEX format：0x6666 0x7777      
+origin v0 is 26214, v1 is 30583      
+v0 is 30583, v1 is 40934      
+v0 is 40934, v1 is 79863      
+v0 is 79863, v1 is 754406      
+v0 is 754406, v1 is 2822071      
+v0 is 2822071, v1 is 5498630      
+v0 is 5498630, v1 is 8600855       
+v0 is 8600855, v1 is 22765030       
+v0 is 22765030, v1 is 36978103      
+加密后的数据：36978103 22765030      
+HEX format：0x2343db7 0x15b5de6      
+origin v0 is 36978103, v1 is 22765030       
+v0 is 22765030, v1 is 8600855       
+v0 is 8600855, v1 is 5498630     
+v0 is 5498630, v1 is 2822071      
+v0 is 2822071, v1 is 754406     
+v0 is 754406, v1 is 79863      
+v0 is 79863, v1 is 40934      
+v0 is 40934, v1 is 30583      
+v0 is 30583, v1 is 26214      
+解密后的数据：26214 30583      
+HEX format：0x6666 0x7777
+
 
 
 #### 参考
