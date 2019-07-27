@@ -1,5 +1,5 @@
 ---
-title: Embedded Android -- Chapter2
+title: Embedded Android -- Chapter2 [更新中]
 date: 2018-11-10 11:06:33
 tags: 
 - Embedded Android Translation
@@ -158,7 +158,7 @@ As I just hinted, the nice thing about the NDK is that you can combine it with t
 Sometimes embedded and system developers coming to Android expect to be able to use the NDK to do platform-level work. The word "native" in the NDK can be misleading in that regard, because the use of the NDK still involves all of the limitations and requirements that I've said to apply to Java app developers. So, as an embedded developer, remember that the NDK is useful for app developers to run C code that they can call from their Java code. Apart from that, the NDK will be of little to no use for the type of work you are likely to undertake.
 
 ### 总体结构 Overall Architecture
-![图 2-1. 安卓系统架构](https://upload-images.jianshu.io/upload_images/2424151-0348fb02f2a6898b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![图 2-1. 安卓系统架构](https://i.bmp.ovh/imgs/2019/07/33c5a511dac04dd2.png)
 
 图2-1可能会是本书中最重要的一张图表，建议你想办法在这里放个书签，因为我们会经常应用这张图片。尽管这是个简化的视图，当然我们有机会去丰富它，但它为安卓各个部分如何搭配在一起，以及总体结构提供了一个很好的概念。
 Figure 2-1 is probably one of the most important diagrams presented in this book, and I suggest you find a way to bookmark its location as we will often refer back to it, if not explicitly then implicitely. Although it's a simplified view—and we will get the chance to enrich it as we go—it gives a pretty good idea of Android's architecture and how the various bits and pieces fit together.
@@ -183,7 +183,7 @@ Although it's beyond the scope of this book to discuss the Linux kernel's intern
 请注意下面的小节只包含了最重要的部分，安卓化的内核通常在标准内核基础上打了上百个补丁，用于提供特定设备功能，修复以及增强。可以使用git在http://android.git.kernel.org中对安卓内核与主线内核进行详尽分析。另外，如PEME驱动程序是某些安卓内核的特定功能，不一定会在所有的安卓设备中使用。
 Note that the following subsections cover only the most important Androidisms. Android-ified kernels typical contain several hundred patches over the standard kernel, often to provide device-specific functionality, fixes and enhancements. You can use git to do an exhaustive analysis on the commit deltas between one of the kernels at http://android.git.kernel.org and the mainline kernel they were forked from. Also, note that some of the functionality that appears in some Android-ified kernels, such as the PMEM driver for instance, is device-specific and isn't necessarily used in all Android devices.
 
-#### Wakelocks 唤醒锁
+#### 唤醒锁 Wakelocks
 
 在所有安卓主义中，这或许是最具争议的。将这个功能包含进主线内核讨论了将近2000封邮件，但仍然没有明确的路径去合并唤醒锁功能。
 Of all the Androidisms, this is likely the most contentious. The discussion threads covering its inclusion into the mainline kernel generated close to 2,000 emails and yet still, there's no clear path for merging the wakelock functionality.
@@ -198,7 +198,7 @@ That modus operandi works fine for a laptop and desktop-like devices, but it doe
 The wakelocks and early suspend functionality are actually built on top of Linux's existing power management functionality. However, they introduce a different development model, since application and driver developers must explicitely grab wakelocks whenever they conduct critical operations or must wait for user input. Usually, app developers don't need to deal with wakelocks directly, because the abstractions they use automatically take care of the required locking. They can, nonetheless, communicate with the Power Manager Service if they require explicit wakelocks. Driver developers, on the other hand, can call on the added in-kernel wakelock primitives to grab and release wakelocks. The downside of using wakelocks in a driver,  however, is that it becomes impossible to push that driver into the mainline kernel, because the mainline doesn't include wakelock support.
 
 
-#### Low Memeory Killer 低内存杀手
+#### 低内存杀手 Low Memeory Killer
 
 如之前所提及的，安卓行为很大程度上取决于低内存条件。因此，OOM的行为是至关重要的。所以安卓研发团队在内核OOM杀进程之前添加了一个额外的低内存杀手。安卓的低内存杀手按照应用程序开发文档中描述的策略，淘汰了那些长时间未使用且优先级不高的组件进程。
 As I mentioned earlier, Android's behavior is very much predicated on low-memory conditions. Hence, out-of-memory behavior is crucial. For this reason, the Android development team has added an additional low memory killer to the kernel that kicks in before the default kernel OOM killer. Android's low-memory killer applies the policies described in the app development documentation, weeding out processes hosting components that haven't been used in a long time and that are not high-priority.
@@ -276,7 +276,7 @@ Because of its light-weight and efficient design, Android's logger can actually 
 图2-2描述了安卓日志框架的细节。如图所示，日志驱动是所有日志相关功能得以运行的基础核心模块。在*/dev/log/*目录下各个缓冲区作为单独的条目。然而，没有用户空间组件直接与驱动交互。相反，他们都依赖liblog提供一系列不同的日志功能。根据功能使用与传递的参数，事件会记录到不同的缓存中。**Log**和**Slog**类使用liblog库，例如首先检测事件是否来自音频相关模块，如果是，则事件被分发至音频缓存区。否则，**Log**类会将事件传给“主”缓冲区，此时**Slog**类再将事件给“系统”缓冲区。主缓冲区事件在没有任何参数的情况下会在*logcat*命令中显示。
 Figure 2-2 describes Android's logging framework in more detail. As you can see, the logger driver is the core building block on which all other logging-related functionality relies. Each buffer it manages is exposed as a separate entry within */dev/log/*. However, no user-space component directly interacts with that driver. Instead, they all rely on liblog which provides a number of different logging functions. Depending on the functions being used and the parameters being passed, events will get logged to different buffers. The liblog functions used by the **Log** and **Slog** classes, for instance, will test whether the event being dispatched comes from a radio-related module. If so, the event is sent to the "radio" buffer. If not, the **Log** class will send the event to the "main" buffer where the **Slog** class will send it to the "system" buffer. The "main" buffer is one whose events are shown by the *logcat* command when it's issued without any parameters.
 
-![Figure 2-2. Android's logging framework](https://upload-images.jianshu.io/upload_images/2424151-3162cfa959ce7c50.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Figure 2-2. 安卓的日志系统框架](https://i.bmp.ovh/imgs/2019/07/9ce02cb7562a574c.png)
 
 **Log**和**EventLog**类都可以通过应用的API调用，但**Slog**只能由AOSP内部使用。尽管**EventLog**开放给了应用开发人员，但文档中明确说明了其主要开放给系统集成商而非应用开发者。事实上，绝大部分开发代码样例中都使用了**Log**类。通常，**EventLog**是系统组件使用，尤其是系统服务器主机？类服务将结合**Log**，**Slog**和**EventLog**来记录各类事件。与应用开发人员相关的日志可能使用**Log**，而与平台集成相关的日志就可能使用**Slog**或**EventLog**。
 Both the **Log** and **EventLog** classes are exposed through the app development API, while **Slog** is for internal AOSP use only. Despite being available to app developers, though, **EventLog** is clearly identified in the documentation as mainly or system integrators, not app developers. In fact, the vast majority of code samples and examples provided as part of the developer documentation use the **Log** class. Typically, **EventLog** is used by system components, especially System Server-hosted services, will use a combination of **Log**, **Slog**, and **EventLog** to log different events. An event that might be relevant to  app developers, for instance, might be logged using **Log**, while an event relevant to platform developers or system integrators might be logged using either **Slog** or **EventLog**.
@@ -284,6 +284,282 @@ Both the **Log** and **EventLog** classes are exposed through the app developmen
 要注意的是，**logcat**这样的实用工具也依赖于liblog。除了添加访问日志驱动的接口，liblog还提供了美化打印与过滤器格式化事件功能。另一个特性是，liblog要求每一个事件需要标明优先级、标签与数据。优先级可以选择**verbose**，**debug**，**info**，**warn**或**error**。标签是一个唯一的字符串用于区分日志属于不同的模块或组件。数据就是需要被记录的具体信息。
 Note that the **logcat** utility, which is commonly used by app developers to dump the Android logs, also relies on liblog. In addition to providing access functions to the logger driver, liblog also provides functionality for formatting events for pretty printing and filtering. Another feature of liblog is that it requires every envent being logged to have a priority, a tag, and data. The priority is one of **verbose**, **debug**, **info**, **warn**, or **error**. The tag is a unique string that identifies the component or module writing to the log, and the data is the actual information that needs to be logged. This description should in fact sound fairly familiar to anyone exposed to the app development API, as this is exactly what's spelled out by the developer documentation for the **Log** class.
 
+现在最后一块拼图就是*adb*命令了，在后文中会讨论到，AOSP包含了安卓调试通道(ADB)的守护进程，可以通过*adb*命令行工具在主机端访问安卓设备。当输入*adb logcat*时，守护进程实际上在本地发送*logcat*命令，获取主缓冲区输出并推到主机的终端中显示。
 The final piece of the puzzle here is the *adb* command. As we'll discuss later, the AOSP includes an Android Debug Bridge (ADB) daemon that runs on the Android device and that is accessed from the host using the *adb* command-line tool. When you type *adb logcat* on the host, the daemon actually launchers the *logcat* command locally on the target to dump its "main" buffer and then transfers that back to the host to be shown on the terminal.
 
 #### 其他值得一提的安卓主义 Other Notable Androidisms
+
+除了上文所描述的部分，还有一些其他“安卓派”的设计值得一提。
+A few other Androidisms, in addition to those already covered, are worth mentioning, even if we don't cover them in as much detail.
+
+*Paranoid网络*
+*Paranoid Networking*
+
+在Linux中，所有进程都被允许创建进程并连接网络。在安卓的安全模式下，网络访问是受到控制的。因此，内核添加了一个选项，通过判断当前进程属组或能力来筛选套接字创建及网络接口管理的访问。这套机制在IPv4，IPv6和蓝牙上都适用。
+Usually in Linux, all processes are allowed to create sockets and interact with the network. Per Android's security model, however, access to network capabilities has to be controlled. Hence, an option is added to the kernel to gate access to socket creation and network interface administration based on whether the current process belongs to a certain group of processes or possesses certain capabilities. This applies to IPv4, IPv6, and Bluetooth.
+
+*RAM控制台*
+*RAM Console*
+
+正如之前提到的，内核管理自己的日志，可以使用*dmesg*命令访问这些日志。日志内容非常有价值，其中常常包含驱动或内核子系统的关键信息。在崩溃或内核挂逼时，日志可以帮助问题的事后分析。由于这些信息常常在重启后丢失，安卓添加了一个驱动注册基于RAM的控制台，控制台在重启后仍然存在，并可以通过*/proc/last_kmsg*访问日志内容。
+As I mentioned earlier, the kernel manages its own log, which you can access using the *dmesg* command. The content of this log is very useful, as it often contains critical messages from drviers and kernel subsystems. On a crash or a kernel panic, its content can be instrumental for post-mortem analysis. Since this information is typically lost on reboot, Android adds a driver that registers a RAM-based console that survives reboots and makes its content accessible through */proc/last_kmsg*.
+
+*物理内存（pmem）*
+*Physical Memory (pmem)*
+
+正如匿名共享内存，物理内存也驱动允许进程间共享内存。但不同的地方在于，pmem允许共享物理上相连的大片内存，而非虚拟内存。此外，这些内存区域也可能在进程与驱动间共享。例如HTC G1手机上就使用pmem进行2D硬件加速。但需要注意，pmem并不适用于所有设备，实际上，来自安卓内核团队的Brain Swetland说，它是专门针对MSM7201A（G1的处理器）编写。
+Like ashmem, the pmem driver allows for sharing memory between processes. However, unlike ashmem, it allows the sharing of large chunks of physically-contiguous memory regions, not virtual memory. In addition, these memory regions may be shared between processes and drivers. For the G1 handset, for instance, pmem heaps are used for 2D hardware acceleration. Note, though, that pmem isn't used in all devices. In fact, according to Brian Swetland, one of the Android kernel development team members, it was written to specifically target the MSM7201A's# limitations.
+
+--------------------------------------------------
+
+### 硬件支持 Hardware Support
+
+安卓的硬件支持方式与典型的Linux内核和基于Linux的发行版大不相同。具体来看，硬件支持的实现方式、基于该硬件支持构建的抽象以及围绕最终代码许可和分发理念都是不同的。
+Android's hardware support approach is significantly different from the classic approach typically found in the Linux kernel and in Linux-based distributions. Specifically, the way hardware support is implemented, the abstractions built on that hardware support, and the mindset surrounding the licensing and distribution of the resulting code are all different.
+
+#### Linux方式 The Linux Approach
+
+一般为Linux提供新硬件支持的方式包含内核构建分或在运行时动态装载模块。相应的硬件随后通常可以通过进入*/dev*目录在用户空间访问。Linux驱动模型定义了三种基本的设备：字符设备，体现为字节流；块设备（基本为硬盘）以及网络设备。多年以来新增了很多额外设备与子系统，如USB或MTD设备。然而，*/dev*给到相应设备入口的API与接口方法仍然相当标准与稳定。
+The usual way to provide support for new hardware in Linux is to create device drivers that are either built as part of the kernel or loaded dynamically at runtime through modules. The corresponding hardware is thereafter generally accessible in user-space through entries in */dev*. Linux's driver model defines three basic types of devices: character devices, devices that appear as stream of bytes, block devices (essentially hard disks), and networking devices. Over the years, quite a few additional device and subsystem types have been added, such as for USB or MTD devices. Nevertheless, the APIs and methods for interfaceing with */dev* entry corresponding to a given type of device have remained fairly standardized and stable.
+
+因此，这就允许了*/dev*节点上构建各样的软件栈，得以直接与硬件交互或应用程序通过调用公开的API访问硬件。实际上，绝大多数的Linux发行版都有相似的内核库与子系统，如ALSA音频库和X Window系统。都能够通过*/dev*访问硬件设备。
+This, therefore, has allowed various software stacks to be built on top of */dev* nodes to either interact with the hardware directly or expose generic APIs that are used by user applications to provide access to the hardware. The vast majority of Linux distributions in fact ship with a similar set of core libraries and subsystems, such as the ALSA audio libraries and the X Window System, to interface with hardware devices exposed through */dev*.
+
+对于许可与发布方面，一般的“Linux”方式是始终将驱动作为主线内核的一部分进行合并与发布，并在GPL条款下发布。所以一般不建议将设备驱动独立开发与维护，甚至在其他协议下发布。实际上，在许可方面，非GPL的驱动一直是一个有争议的问题。因此，一般做法是用户和经销商最好从http://kernel.org中获取最新的主线内核驱动。这些内核在早先就已经在GPL下发布，尽管内核有添加，但仍然受GPL约束。
+With regard to licensing and distribution, the general "Linux" approach has always been that drivers should be merged and maintained as part of the mainline kernel and distributed with it under the terms of the GPL. So, while some device drivers are developed and maintained independently and some are even distributed under other licenses, the consensus has been that that isn't the preferred approach. In fact, with regard to licensing, non-GPL drivers have always been a contentious issue. Hence, the conventional wisdom is that users' and distributors' best bet to get the latest drivers is usually to get the latest mainline kernel from http://kernel.org. This has been true since the kernel's early days and remains true despite some additions having been made to the kernel to allow the creation of user-space drivers.
+
+#### 安卓通用方式 Android's General Approach
+
+尽管安卓构建在内核硬件抽象与功能上，方式却大不相同。从纯技术层面而言，最显著的区别在于其子系统与库不需要依赖标准的*/dev*来工作。反之，安卓更加依赖由制造商提供的共享库与硬件交互。实际上，安卓依赖于一个被称为硬件抽象层(HAL层)的结构，不过，正如我们所见的，不同类型硬件间组件的接口、行为与功能都差异巨大。
+Although Android builds on the kernel's hardware abstractions and capabilities, its approach is very different. On a purely technical level, the most glaring difference is that its subsystems and libraries don't rely on standard */dev* entries to function properly. Instead, the Android stack typically relies on shared libraries provided by manufacturers to interact with hardware. In effect, Android relies on what can be considered a 
+Hardware Abstraction Layer (HAL), although, as we will see, the interface, behavior and function of abstracted hardware components differ greatly from type to type.
+
+此外，大部分在Linux发行版上常见的软件栈并没有出现在安卓中。比如安卓中没有X Window系统。虽然有时也会用到ALSA驱动，但硬件制造商会决定提供何种共享库实现对HAL层音频的支持。所以功能访问这点上就与标准的Linux发行版不同。
+In addition, most software stacks typically found in Linux distributions to interact with hardware are not found in Android. There is no X Window System, for instance, and while ALSA drivers are sometimes used—a decision left up to the hardware manufacturer who provides the shared library implementing audio support for the HAL—access to their functionality is different from that on standard Linux distributions.
+
+图2-3呈现了安卓中典型的硬件抽象与支持方式，及相应的分发与许可。正如你所见的，安卓最终还是需要靠内核访问硬件。然而，这里的功能早就由设备制造商或AOSP中实现了。
+Figure 2-3 presents the typical way in which hardware is abstracted and supported in Android, and the corresponding distribution and licensing. As you can see, Android still ultimately relies on the kernel to access the hardware. However, this is done through shared libraries that are either implemented by the device manufacturer or provided as part of the AOSP.
+
+这种方法的一大特点就是共享库的许可由硬件制造商决定。因此，设备制造商可以创建一个简单的设备驱动实现给定硬件的基础功能，并将驱动发布在GPL下。硬件不会透露过多的内容，因为驱动不会玩什么花活。接着驱动会通过**mmap()**或**ioctl()**接口将硬件公开给用户空间，那么各种复杂的操作将在用户空间专用的共享库中实现，并以此驱动硬件设备。
+One of the main features of this approach is that the license under which the shared library is distributed is up to the hardware manufacturer. Hence, a device manufacturer can create a simplistic device driver that implements the most basic primitives to access a given piece of hardware and make that driver available under the GPL. Not much would be revealed about the hardware, since the driver wouldn't do anything fancy. That driver would then expose the hardware to user-space through **mmap()** or **ioctl()** and the bulk of the intelligence would be implemented within a proprietary shared library in user-space that uses those functions to drive the hardware.
+
+安卓并没有规定共享库、驱动或内核子系统应该如何交互。只有为上层提供API的共享库才由安卓指定。因此，只要能实现适用的API，你可以任意决定使用认为最适合的硬件驱动。不过，我们将在下章介绍使用与安卓的典型硬件方法。
+Android does not in fact specify how the shared library and the driver or kernel subsystem should interact. Only the API provided by the shared library to the upper layers is specified by Android. Hence, it's up to you to determine the specific driver interface that best fits your hardware, so long as the shared library you provide implements the appropriate API. Nevertheless, we will cover the typical methods used by Android to interface to hardware in the next section.
+
+而安卓相对不一致的地方是上层加载硬件支持共享库的方式。现在请注意，对于大多数的硬件类型，必须由AOSP或开发者提供*.so*类型文件，否则安卓就不能正常工作。
+Where Android is relatively inconsistent is the way the hardware-supporting shared libraries are loaded by the upper layers. Remember for now that for most hardware types, there has to be a *.so* file that is either provided by the AOSP or that you must provide for Android to function properly.
+
+无论是哪种方式，都是为了装载硬件支持的共享库，响应硬件的系统服务主要负责加载和连接共享库。这类系统服务负责与其他系统服务协调，使硬件和系统其余部分以及供开发人员使用的API保持一致。如果你需要为一个给定的硬件添加支持，你需要尽可能详细地了解这部分相关的系统服务内部结构。通常系统服务分为两部分，java实现大部分安卓相关的内容，另一部分则由C完成，主要负责支持共享库及其他底层功能的硬件交互。
+No matter which mechanism is used to load a hardware-supporting shared library, a system service corresponding to the type of hardware is typically responsible for loading and interfacing with the shared libary. That system service will be responsible for interacting and coordinating with the other system services to make the hardware behave coherently with the rest of the system and the APIs exposed to app developers. If you're adding support for a given type of hardware, it's therefore crucial that you try to understand in as much detail as possible the internals of the system service corresponding to your hardware. Usually, the system service will be split in two parts, one part in Java that implements most of the Android-specific intelligence and another part in C whose main job is to interact with the hardware-supporting shared library and other low-level functions.
+
+![Android's "Hardware Abstraction Layer"](https://i.bmp.ovh/imgs/2019/07/8075b50ec1af0b9c.png)
+
+#### 装载与接口方法 Loading and Interfacing Methods
+
+正如前文所提及，大体上系统服务与安卓有非常多的方法与硬件设备的共享库进行交互，从而实现对硬件的支持。很难完全理解为什么会存在如此多的方法，但是作者怀疑有一些是有组织地形成的。幸运的是，这似乎正在朝着更加统一的方式发展。鉴于安卓在以相当迅速的方式演化，这是在未来一个需要密切关注的领域，因为它或许一眨眼就进化了。
+As I mentioned earlier, there are various ways in which system services and Android in general interact with the shared libraries implementing hardware support and hardware devices in general. It's difficult to fully understand why there is such a variety of methods, but I suspect that some of them evolved organically. Luckily, there seems to be a movement towards a more uniform way of doing things. Given that Android moves at a fairly rapid pace, this is one area that will require keeping an eye on for the forseeable future, as it's likely to evolve.
+
+注意，这些方法的描述并不是互斥的。安卓技术栈中经常在加载或交互共享库及一些软件的前后时刻组合使用这些方法。
+Note that the methods described here are not necessarily mutually exclusive. Often a combination of these is used within the Android stack to load and interface with a shared library or some software layer before or after it. I'll cover specific hardware in the next section.
+
+**dlopen()** - *通过硬件抽象层加载*
+**dlopen()** - *loading through HAL*
++ *相关：GPS，灯，传感器与显示*
+一些硬件支持的共享库有libhardware库所装载。这个库属于安卓的硬件抽象层，并提供**hw_get_module()**接口，某些系统服务及子系统通过该接口显示加载特定硬件支持共享库（在**HAL**属于中成为“模块”）。**hw_get_module()**反过来依靠典型的**dlopen()**将加载到调用者的地址空间中。
++ *Applies to; GPS, Lights, Sensors, and Display*
+Some hardware-supporting shared libraries are loaded by the libhardware library. This library is part of Android's HAL and exposes **hw_get_module()**, which is used by some system services and subsystems to explicitly load a given specific hardware-supporting shared library (a.k.a. a "module" in **HAL** terminology). **hw_get_module()** in turn relies on the classic **dlopen()** to load libraries into the caller's address space.
+
+连接器装载*.so*文件
+*Linker-loaded .so files*
++ *相关：音频，摄像头，wifi，马达及电源管理*
+一般情况下，系统服务只是在构建时与指定的.so文件链接。因此，当二进制文件运行起来时，动态链接器会自动将共享库装载至进程的地址空间。
++ *Applies to: Audio, Camera, Wifi, Vibrator, and Power Management*
+In some cases, system services are simply linked against a given .so file at build time. Hence, when the corresponding binary is run, the dynamic linker automatically loads the shared library into the process's address space.
+
+*硬编码**dlopen()***
+*Hardcoded **dlopen()**s*
++ *相关：StageFright与无线电接口层*
+在一些场景下，内核赋予**dlopen()**直接获取硬件使能的共享库，无需再通过**libhardware**实现。目前还不清楚这种方法的原理。
++ *Applies to: StageFright and Radio Interface Layer(RIL)*
+In a few cases, the code invokes **dlopen()** directly instead of going through **libhardware** to fetch a hardware-enabling shared library. The rationale for using this method instead of the HAL is unclear.
+
+*套接字*
+*Sockets*
++ *相关：蓝牙，网络管理，硬盘挂载和无线接口层*
+系统服务或框架组件有时会使用套接字与硬件交互的远程守护进程及服务对话。
++ *Applies to: Bluetooth, Network Management, Disk Mounting, and Radio Interface Layer(RIL)*
+Sockets are sometimes used by system services or framework components to talk to a remote daemon or service that actually interacts with the hardware.
+
+*文件系统条目（项）*
+*Sysfs entries*
++ *相关：马达与电源管理*
+文件系统（/sys）中的一些条目被用来控制硬件或内核子系统行为。在某些情况下，相比于用/dev中的条目，安卓会使用这个方法来控制硬件。
++ *Applies to: Vibrator and Power Management*
+Some entries in sysfs (/sys) can be used to control the behavior of hardware and/or kernel subsystems. In some cases, Android uses this method instead of /dev entries to control the hardware.
+
+*/dev节点*
+*/dev nodes*
++ *相关：几乎所有类型的硬件*
+可以肯定的是，任何硬件抽象都必须在某个时刻与*/dev*中的一个条目通信，这就是驱动向用户空间公开的方式。有些通信通过共享库的方式隐藏在安卓中。有时AOSP也会直接访问设备节点，比如输入管理器使用输入库的场景。
++ *Applies to: Almost every type of hardware*
+Aguably, any hardware abstraction must at some point communicate with an entry in */dev*, because that's how drivers are exposed to user-sapce. Some of this communication is likely hidden to Android itself because it interacts with a shared library instead, but in some other cases AOSP components directly acess device nodes. Such is the case of input libraries used by the Input Manager.
+
+*D-Bus*
+*D-Bus*
++ *相关：蓝牙*
+D-Bus作为一个经典的信息系统，可以在几乎所有的Linux发行版找到，用于促进不同桌面组件间的通信。它之所以出现在安卓中，就是因为它是非GPL组件与GPL许可的BlueZ栈——Linux默认蓝牙堆栈对话的指定方式，如此一来在安卓中使用蓝牙就无需受到GPL再分发的要求。D-Bus本身有教育免费许可（AFL）与GPL的双重认可。关于D-Bus的更多信息，可以访问http://dbus.freedesktop.org。
++ *Applies to: Bluetooth*
+D-Bus is a classic messaging system found in most Linux distributions for facilitating communication between various desktop components. It's included in Android because it's the prescribed way for a non-GPL component to talk to the GPL licensed BlueZ stack—Linux's default Bluetooth stack and the one used in Android—without being subject to the GPL's redistribution requirements; D-Bus itself being dual-licensed under the Academic Free License (AFL) and the GPL. Have a look at http://dbus.freedesktop.org for more information about D-Bus.
+
+#### 设备支持细节 Device Support Details
+
+表2-1汇总了安卓中支持每种类型硬件的方式。如你所注意到的，这里面包含了很多机制与接口组合。如果你打算实现特定硬件的支持，那么最好的方法就是从现有的示例中开始。AOSP专门为一些设备增加了硬件支持，主要是谷歌使用的最新测试机与一些旗舰机型。有时硬件支持来源十分广泛，例如三星Nexus S（代号俗称Crespo）。
+Table 2-1 summarizes the way in which each type of hardware is supported in Android. As you'll notice, there is a wide variety of combinations of mechanisms and interfaces. If you plan on implementing support for a specific type of hardware, the best way forward is to start from an existing sample implementation. The AOSP typically includes hardware support code for a few handsets, generally those which were used by Google to develop new Android releases and therefore served as flagship devices. Sometimes the sources for the hardware support are quite extensive, as was the case for the Samsung Nexus S (a.k.a. "Crespo", its code-name).
+
+唯一一个不太容易公开获取的硬件类型就是RIL。处于种种原因，最好不要让所有人都玩起无线电波。因此，制造商不提供此类实现。相反，如果你希望实现一个RIL，谷歌提供了其实现参考。
+The only type of hardware for which you are unlikely to find publicly-available implementations on which to base your own is the RIL. For various reasons, it's best not to let everyone be able to play with the airwaves. Hence, manufacturers don't make such implementations available. Instead, Google provides a reference RIL implementation in the AOSP should you want to implement a RIL.
+
++ *表2-1. 安卓硬件支持方法与接口*
++ *Table 2-1. Android's hardware support methods and interfaces*
+
+Hardware|System Service|Interface to user-space HW support|Interface to HW
+-|-|-|-
+Audio|Audio Flinger|Linker-loaded *libaudio.so*|Up to HW manufacturer, though ALSA is typical
+Bluetooth|Bluetooth Service|Socket/D-Bus to BlueZ|BlueZ stack
+Camera|Camera Service|Linker-loaded *libcamera.so*|Up to HW manufacturer, sometimes Video4Linux
+Display|Suface Flinger|HAL-loaded *gralloc* module|*/dev/fb0 or /dev/graphics/fb0*
+GPS|Location Manager|HAL-loaded *gps* module|Up to HW manufacturer
+Input|Input Manager|Native library|Entries in */dev/input*
+Lights|Lights Service|HAL-loaded *lights* module|Up to HW manufacturer
+Media|N/A, StageFright framework within Media Service|dlopen on *libstagefrightw.so*|Up to HW manufacturer
+Network interfaces|Network Management Service|Socket to netd|ioctl() on interfaces
+Power Management|Power Manager Service|Linker-loaded libhardware_legacy.so|Entries in /sys/android_power/ or /sys/power 
+Radio (phone)|N/A, entry point is telephony Java code|Socket to *rild*, which itself does a dlopen() on manufacturer-provided.so|Up to HW manufacturer
+Storage|Mount Service|Socket to vold|System calls
+Sensors|Sensor Service|HAL-loaded sensors module|Up to HW manufacturer
+Vibrator|Vibrator Service|Linker-loaded libhardware_legacy.so|Up to HW manufacturer
+Wifi|Wifi Service|Linker-loaded libhardware_legacy.so|Classic *wpa_supplicant*
+
+-----------------------------------------
+
+### 原生用户空间 Native User-Space
+
+至此，我们已经覆盖了安卓的底层内容，接下来开始进入上一层。首先，我们需要了解安卓操作系统中的原生用户空间环境。关于“原生用户空间”，这里指的是所有用户空间组件都是运行在Dalvik虚拟机之外的。这之中包含了很多编译运行在目标CPU架构上的二进制文件。通常是自动或根据init进程的配置文件启动，或集成在命令行中由开发人员的脚本调用。这些二进制文件可以直接访问根文件系统与系统中包含的原生库。它们的功能被赋予其文件系统的权限限制，因为其运行在应用程序框架之外，所以并不会受到如安装框架对安卓应用的限制。
+Now that we've covered the low-level layers on which Android is built, let's start going up the stack. First off, we'll cover the native user-space environment in which Android operates. By "native user-space" I mean all the user-space components that run outside the Dalvik virtual machine. This includes quite a few binaries that are compiled to run natively on the target's CPU architecture. These are generally started either automatically or as needed by the init process according to its configuration files, or are available to to be invoked on the command line once a developer shells into the device. Such binaries usually have direct access the root filesystem and the native libraries included in the system. Their capabilities would be gated by the filesystem rights granted to them and wouldn't be subject to any of the restrictions imposed on a typical Android app by the Android framework because they are running outside of it.
+
+注意，安卓的用户空间基本是从一张白纸开始设计，与标准Linux发行版存在很大的不同。因此，下面将尽可能多的解释安卓用户空间与基于Linux系统的异同之处。
+Note that Android's user-space was designed pretty much from a blank slate and differs greatly from what you'd find in a standard Linux distribution. Hence, I will try in as much as possible in the following to explain where Android's user-space is different or similar to what you'd usually find in a Linux-based system.
+
+#### 文件系统布局 Filesystem layout
+
+像其他基于Linux的发行版一样，安卓也使用一个根文件系统来存储应用，库和数据。但与这些发行版不同的是，安卓的根文件系统并不符合文件系统层次标准（FHS）。内核本身并不强制要求FHS，但大部分为Linux构建的软件包会假设它们运行的根文件系统符合FHS。因此，如果你打算将一个标准Linux应用移植到安卓中，你可能得费点力气以确保它依赖的文件路径依然有效。
+Like any other Linux-based distribution, Android uses a root filesystem to store applications, libraries, and data. Unlike the vast majority of Linux-based distributions, however, the layout of Android's root filesystem does not adhere to the Filesystem Hierarchy Standard (FHS). † The kernel itself doesn't enforce the FHS, but most software packages built for Linux assume that the root filesystem they are running on conforms to the FHS. Hence, if you intend to port a standard Linux application to Android, you'll likely need to do some legwork to ensure that the filepaths it relies on are still valid.
+
+考虑到运行在安卓用户空间的包基本都是为安卓专门编写的，上述的不一致性几乎没有影响。实际上，我们很快可以发现这也有一些好处。总之对学习安卓根文件系统还是很重要的。如果要在硬件上跑安卓系统，或者客制化硬件设备，最好还是在这上面花些时间。
+Given that most of the packages running in Android's user space were written from scratch specifically for Android, this lack of conformity is of little to no consequence to Android itself. In fact, it has some benefits, as we'll see shortly. Still, it's important to learn how to navigate Android's root filesystem. If nothing else, you'll likely have to spend quite some time inside of it as you bring Android up on your hardware or customize it for that hardware.
+
+安卓系统中的两个主要目录便是*/system*与*/data*。这两个目录并没有出现在FHS中。实际上，应该没有任何一个主流的Linux发行版会使用这两个目录。相反，这反应了安卓开发团队自己的设计。这或许是一个早起的迹象，暗示了安卓在同一套根文件系统上将自身与Linux发行版并至。我们同样安排在后文对这一点详细讨论。
+The two main directories in which Android operates are */system* and */data*. These directories do not emanate from the FHS. In fact, I can't think of any mainstream Linux distribution that uses either of these directories. Rather, they reflect the Android development team's own design. This is one of the first signs hinting to the fact that it might be possible to host Android side-by-side with a common Linux distribution on the same root filesystem. As I said earlier, we'll actually examine this possibility in more detail later in the book.
+
+*/system*目录用于存储由AOSP构建生成的不发生变化的组件，其中包括原生二进制文件，原生库，框架层包基于系统应用。它通常挂载在根文件系统独立出的镜像中，由其自身通过RAM盘镜像挂载。另一方面，*/data*分区用来存储则用来存储随时间会发生变化的文件，如数据及应用。其中包括由用户安装应用及系统组件运行时生成的内容。该分区也是在自己独立的镜像中被挂载。
+*/system* is the main Android directory for storing immutable components generated by the build of the AOSP. This includes native binaries, native libraries, framework packages, and stock apps. It's usually mounted from a separate image from the root filesystem, which is itself mounted from a RAM disk image. */data*, on the other hand, is Android's main directory for storing data and apps that change over time. This includes the data generated and stored by apps installed by the user alongside data generated by Android system components at runtime. It too is usually mounted from its own separate image.
+
+安卓中也包含很多在任何Linux系统中常见的目录， 如 */dev*，*/proc*， */sys*， */sbin*， */root*， */mnt*和 */etc*。这些目录的作用与其他Linux系统中基本是相似的，尽管它们经常被删减，如*/sbin*与*/etc*，而像*/root*，有时是空的。
+Android also includes many directories commonly found in any Linux system, such as: */dev*, */proc*, */sys*, */sbin*, */root*, */mnt*, and */etc*. These directories often serve similar if not identical purposes to the the ones they serve on any Linux system, although they are very often trimmed down, as is the case of */sbin* and */etc*, and in some cases are empty, such as /root.
+
+有趣的是，安卓没有包括*/bin*与*/lib*目录。这些目录在Linux中是至关重要的，它们中包含了基本的二进制文件与库文件。这也为安卓与标准Linux组件共存打开了一扇大门。
+Interestingly, Android doesn't include any */bin* or */lib* directories. These directories are typically crucial in a Linux system, containing, respectively, essential binaries and essential libraries. This is yet another artefact that opens the door for making Android coexist with standard Linux components.
+
+当然，对于安卓的根文件系统还有很多地方可聊。例如刚才的内容仅仅提到了目录与它们的层次结构。安卓的根文件系统还包含了这里未提及的其他目录。我们将在第五章中更加详细地回顾安卓根文件系统及其组成。
+There is of course more to be said about Android's root filesystem. The directories just mentioned, for instance, contain their own hierarchies. Also, Android's root filesystem contains other directories that I haven't covered here. We will revist the Android root filesystem and its make-up in more detail in Chapter 5.
+
+#### 库 Libraries
+
+安卓依赖着上百个动态装载库，这些库都被存储在*/system/lib*路径下。有一定数量的库来源于外部项目，这些项目最后也被合并入安卓的源码中，以使其能够可以运行在安卓上，但大部分的*/system/lib*库还是由AOSP本身生成的。
+Android relies on about a hundred dynamically-loaded libraries, all stored in the */system/lib* directory. A certain number of these come from external projects that were merged into Android's codebase to make their functionality available within the Android stack, but a large portion of the libraries in */system/lib* are actually generated from within the AOSP itself. Table 2-2 lists the libraries included in the AOSP that come 
+from external projects, whereas Table 2-3 summarizes the Android-specific libraries generated from within the AOSP.
+
++ *表 2-2. 由AOSP收纳外部项目生成的库*
++ *Table 2-2. Libraries generated from external projects imported into the AOSP*
+
+Library(ies)|Extemal Project|Original Location|License
+-|-|-|-
+*libcrypto.so and libssl.so*|OpenSSL|http://www.openssl.org|Custom, BSD-like
+*libdbus.so*|D-Bus|http://dbus.freedesktop.org|AFL and GPL
+*libexif.so*|Exif Jpeg header manipulation tool|http://www.sentex.net/~mwandel/jhead/|Public Domain
+*libexpat.so*|Expat XML Parser|http://expat.sourceforge.net|MIT
+*libFFTEm.so*|neven face recognition library|N/A|ASL
+*libicui18n.so and libicuuc.so*|International Components for Unicode|http://icu-project.org|MIT
+*libiprouteutil.so and libnetlink.so*|iproute2 TCP/IP networking and traffic control|http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2|GPL
+*libjpeg.so*|libjpeg|http://www.ijg.org|Custom, BSD-like
+*libnfc_ndef.so*|NXP Semiconductor's NFC library|N/A|ASL
+*libskia.so and libskiagl.so*|skia 2D graphics library|http://code.google.com/p/skia/|ASL
+*libsonivox*|Sonic Network's Audio Synthesis library|N/A|ASL
+*libsqlite.so*|SQLite database|http://www.sqlite.org|Public Domain
+*libSR_AudioIn.so and libsrec_jni.so*|Nuance Communications' Speech Recognition engine|N/A|ASL
+*libstlport.so*|Implementation of the C++ Standard Template Library|http://stlport.sourceforge.net|Custom, BSD-like
+*libttspico.so*|SVOX's Text-To-Speech speech synthesizer engine|N/A|ASL
+*libvorbisidec.so*|Tremolo ARM-optimized Ogg Vorbis decompression library|http://wss.co.uk/pinknoise/tremolo/|Custom, BSD-like
+*libwebcore.so*|WebKit Open Source Project|http://www.webkit.org|LGPL and BSD
+*libwpa_client*|Library based on wpa_supplicant|http://hostap.epitest.fi/wpa_supplicant/|GPL and BSD
+*libz.so*|zlib compression library|http://zlib.net|Custom, BSD-like
+
++ *表 2-3. 由AOSP生成的安卓定制库*
++ *Table 2-3. Android-specific libraries generated from within the AOSP*
+
+Category|Library(ies)|Description
+-|-|-
+Bionic|*libc.so; libm.so; libdl.so; libstdc++.so; libthread_db.so;*|C library; Math library; Dynamic linking library; Standard C++ library; Threads library;
+Core|*libbinder.so; libutils.so, libcutils.so, libnetutils.so, and libsysutils.so;  libsystem_server.so, libandroid_servers.so, libaudioflinger.so, libsurfaceflinger.so, linsensorservice.so, and libcameraservice.so; libcamera_client.so* and *libsufaceflinger_client.so; libpixelflinger.so; libui.so; liblog.so;*|The Binder library; Various utility libraries; System-service-related libraries; Client libraries for certain system services; The PixelFlinger library; Low-level user-interface-related functionalities, such as user input events handling and dispatching and graphics buffer allocation and manipulation; Sensors-related functions library; The logging library; The Android runtime library;
+Dalvik|*lidvm.so; libnativehepler.so*|The Dalvik VM library; JNI-related helper functions;
+Hardware|*libhardware.so; libhardware_legacy.so; Various hardware-supporting shared libraries.*|The HAL library that provides hw_get_module() uses dlopen() to load hardware support modules (i.e. shared libraries that provide hardware support to the HAL) on demand; Library providing hardware support for wifi, powermanagement and vibrator; Libraries that provide support for various hardware components, some of which are loaded using through the HAL, while others are loaded automatically by the linker;
+Media|*libmediaplayerservice.so; libmedia.so; libstagefright.so; libeffects.so* and the libraries in the *soundfx/* directory; *libdrm1.so* and *libdrm1_jni.so*|The Media Player service library; The low-level media functions used by the Media Player service; The many libraries that make-up the StageFright media framework; The sound effects libraries; The DRM b framework libraries;
+OpenGL|*libEGL.so, libETC1.so, libGLESv2.so* and *egl/libGLES_android.so*|Android's OpenGL implementation
+
+#### 初始化 Init
+
+当内核完成启动，它仅仅会调起一个进程，这个进程就是init进程。随后，init负责生成系统中所有其他进程和服务，并执行一些如重启之类的高危操作。传统的Linux发行版使用SystemV init提供init进程，尽管近年来许多发行版都使用了自己的修改版本。如Ubuntu就使用了upstart。在嵌入式Linux系统中，提供init的就是经典的BusyBox包。
+When the kernel finishes booting, it starts just one process, the init process. This process is then responsible for spawning all other processes and services in the system and for conducting critical operations such as reboots. The package traditionally provided by Linux distributions for the init process uses SystemV init, although in recent years many distributions have created their own variants. Ubuntu, for instance, uses Upstart. In embedded Linux systems, the classic package that provides init is BusyBox.
+
+安卓引入了自定义的init，也带来了一些新鲜玩意。
+Android introduces its own custom init, which brings with it a few novelties.
+
+##### 配置语言 Configuration language
+
+不同于传统的init，传统init根据当前运行等级配置或请求的脚本使用来决定的，而安卓init定义了自己的配置语义，并根据全局属性值来触发特定的指令。
+Unlike traditional inits, which are predicated on the use of scripts that run per the current run-levels' configuration or on request, Android's init defines its own configuration semantics and relies mostly on changes to global properties to trigger the execution of specific instructions.
+
+init的主要配置文件存储在*/init.rc*中，同时也会有一个特定设备的配置文件*/init.**某某设备**.rc*。特定的设备脚本则为*/etc/init.**某某设备**.sh*，这里的**某某设备**指的是设备名称。可以通过修改这些文件达到对系统启动及其行为进行高度控制。例如，你可以禁止Zygote的自启动，并将其改为通过adb命令手动启动。
+The main configuration file for init is usually stored as */init.rc*, but there's also usually a device-specific configuration file stored as */init.**device_name**.rc* and device-specific script stored as */etc/init.**device_name**.sh*, where **device_name** is the name of the device. You can get a high degree of control over the system's startup and its behavior by modifying those files. For instance, you can disable the Zygote from starting up automatically and then starting it manually yourself after having used adb to shell into the device.
+
+##### 全局属性 Global properties
+
+安卓init中非常有趣的一点是，它如何去管理一组全局属性，并且这些属性可以被系统中很多有适当权限的部分访问。有些属性在编译时确定，有些在init配置文件中，也有些在运行时才被设置。有些属性会被保存到存储中被永久使用。属性由init管理，因此它可以检测到任何修改，并根据其配置触发某组命令的执行。
+A very interesting aspect of Android's init is how it manages a global set of properties that can be accessed and set from many parts of the system, with the appropriate rights. Some of these properties are set at build time, while others are set in init's configuration files and still others are set at runtime. Some properties are also persisted to storage for permanent use. Since init manages the properties, it can detect any changes and therefore trigger the execution of a set of commands based on its configuration.
+
+例如之前提及的OOM调整，也是设置为从*init.rc*文件中启动。网络属性也是如此，编译时将该属性写入*/system/build.prop*文件中，并加上编译日期及编译系统详情。当运行时，系统中包含着从IP和GSM配置参数到电池电量上百个属性，使用*getprop*命令可以列出当前的属性及其值。
+The OOM adjustments mentioned earlier, for instance, are set on startup by the *init.rc* file. So are network properties. Properties set at build time are stored in the */system/build.prop* file and include the build date and build system details. At runtime, the system will have over a hundred different properties, ranging from IP and GSM configuration parameters to the battery's level. Use the *getprop* command to get the current list of properties and their values.
+
+##### 内核设备管理器事件 udev events
+
+正如之前所解释的，可以通过Linux的*/dev*目录访问设备。曾经Linux发行版在该目录中包含了上千目录，以适应可能遇到的设备配置。最终还是有些人提议将这些目录创建为动态形式。一段时间后，系统就使用了*udev*，它的工作依赖于每次向系统中添加或删除硬件时，内核生成的运行时事件。
+As I explained earlier, access to devices in Linux is done through nodes within the */dev* directory. In the older days, Linux distributions would ship with thousands of entries in that directory to accomodate all possible device configurations. Eventually, though, a few schemes were proposed to make the creation of such nodes dynamic. For some time now, the system in use has been *udev*, which relies on runtime events generated by the kernel every time hardware is added or removed from the system.
+
+在大部分Linux发行版中，udev热插拔事件由udevd守护进程处理。而安卓中，这些事件由作为安卓init部分构建的*ueventd*守护进程处理，通过符号链接将*/sbin/ueventd*链至*/init*来访问。想要知道*/dev*中创建了那些条目，*ueventd*依赖于*/ueventd.rc*和*/ueventd.**device_name**.rc*文件      
+In most Linux distributions, the handling of udev hotplug events is done by the udevd daemon. In Android, these events are handled by the *ueventd* daemon built as part of Android's init and accessed through a symbolic link from */sbin/ueventd* to */init*. To know which entries to create in */dev*, *ueventd* relies on the */ueventd.rc* and */ueventd.**device_name**.rc* files. 
+
+#### 工具箱 Toolbox
+
+Much like the root filesystem's directory hierarchy, there are essential binaries on most Linux system, listed by the FHS for the /bin and /sbin directories. In most Linux distributions, the binaries in those directories are built from separate packages coming from different sites on the net. In an embedded system, it doesn't make sense to have to deal with so many packages, nor necessarily have that many separate binaries.
+
+The approach taken by the classic BusyBox package is to build a single binary that essentially has what amounts to a huge switch-case , which checks for the first parameter on the command line and executes the corresponding functionality. All commands are then made to be symbolic links the busybox command. So when you type ls, for example, you're actually invoking BusyBox. But since BusyBox's behavior is predicated on the first parameter on the command line and that parameter is ls, it will behave as if you had run that command from a standard Linux shell.
+
+Android doesn't use BusyBox, but includes its own tool, Toolbox, that basically functions in the very same way using symbolic links to the toolbox command. Unfortunately, Toolbox is nowhere as feature-full as BusyBox. In fact, if you've ever used BusyBox, you're likely going to be very disappointed when using Toolbox. The rationale for creating a tool from scratch in this case seems to make most sense when viewed from the licensing angle, BusyBox being GPL licensed. In addition, some Android developers have stated that their goal was to create a minimal tool for shell-based debugging and not to provide a full replacement for shell tools as BusyBox does. At any rate, Toolbox is BSD licensed and manufacturers can therefore modify it and distribute it without having to track the modifications made by their developers or making any sources available to their customers.
+
+You might still want to include BusyBox alongside Toolbox to benefit from its capabilities. If you don't want to ship it as part of your final product because of its licensing, you could include it temporarily during development and strip it in the final production release. We'll cover this in more detail later.
+
+#### 守护进程 Daemons
+
+
+---------------------------
+**未完待续**
