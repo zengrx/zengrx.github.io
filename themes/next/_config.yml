@@ -19,10 +19,10 @@ override: false
 # For example, you put your favicons into `hexo-site/source/images` directory.
 # Then need to rename & redefine they on any other names, otherwise icons from Next will rewrite your custom icons in Hexo.
 favicon:
-  small: /images/flower_16px.png # /images/favicon-16x16-next.png
-  medium: /images/flower_32px.png # /images/favicon-32x32-next.png
-  apple_touch_icon: /images/flower_128px.png # /images/apple-touch-icon-next.png
-  safari_pinned_tab: /images/flower_logo.svg # /images/logo.svg
+  small: /images/atom_16.png # /images/favicon-16x16-next.png
+  medium: /images/atom_32.png # /images/favicon-32x32-next.png
+  apple_touch_icon: /images/atom_128.png # /images/apple-touch-icon-next.png
+  safari_pinned_tab: /images/atom_logo.svg # /images/logo.svg
   #android_manifest: /images/manifest.json
   #ms_browserconfig: /images/browserconfig.xml
 
