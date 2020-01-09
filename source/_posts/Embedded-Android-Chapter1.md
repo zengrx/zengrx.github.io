@@ -6,7 +6,7 @@ tags:
 ---
 
 
-### 简介 Introduction
+**简介 Introduction**
 将安卓操作系统移植到嵌入式设备上是一项复杂的任务，这包括了对系统内部复杂设计的理解，巧妙地将修改融入到安卓开源项目，以及对内核运行平台——Linux的掌握。在开始进入到嵌入式安卓细节之前，先让我们了解一些安卓系统背后的本质内容，例如安卓的硬件需求，安卓的法律体制和对嵌入式设备的影响等。首先，让我们一起看一看安卓的诞生与发展。
 Putting Android on an embedded device is a complex task involving an intricate understanding of its internals and a clever mix of modifications to the Android Open Source Project (AOSP) and the kernel on which it runs, Linux. Before we get into the details of embedding Android, however, let's start by covering some essential background that embedded developers should factor in when dealing with Android, such as Android's hardware requirements and the legal framework surrounding Android and its implications within an embedded setting. First let's look at where Android comes from and how it's developed.
 

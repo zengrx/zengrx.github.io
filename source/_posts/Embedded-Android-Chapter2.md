@@ -1,12 +1,12 @@
 ---
-title: Embedded Android -- Chapter2 [更新中]
+title: Embedded Android -- Chapter2
 date: 2018-11-10 11:06:33
 tags: 
 - Embedded Android Translation
 ---
 
 
-### 内部入门 Internals Primer
+**内部入门 Internals Primer**
 
 正如我们之前所说，安卓源码可以自由地为人们所下载、修改以及安装至选择的机器中。实际上，仅仅是获取、编译代码，再将其运行在安卓模拟器这个过程并不值得一提。能够为你自己的硬件及设备客制化AOSP，做到这件事的前提是需要对安卓的内部结构有一定掌握。所以在这一章，我们先从一个较高的视角去看待安卓内部，在后续章节中再找机会深入理解各个部分。
 As we've just seen, Android's source are freely available for you to download, modify, and install for any device you choose. In fact, it is fairly trivial to just grab the code, build it, and run it in the Android emulator. To customize the AOSP to your device and its hardware, however, you'll need to first understand Android's internals to a certain extent. So we'll get high-level view of Android internals in this chapters, and get opportunity in later chapters to dig into parts of internals in greater detail, including trying said internals to the actual AOSP sources.
@@ -550,16 +550,299 @@ In most Linux distributions, the handling of udev hotplug events is done by the 
 
 #### 工具箱 Toolbox
 
+如根文件系统目录层级一般，大部分的Linux发行版由FHS在/bin与/sbin路径下都存在着许多二进制文件。这些目录下的二进制文件由网上很多不同站点、不同的包编译而成。在一个嵌入式系统中，处理如此多不同的包或需要如此多分裂的二进制文件都不甚合理。
 Much like the root filesystem's directory hierarchy, there are essential binaries on most Linux system, listed by the FHS for the /bin and /sbin directories. In most Linux distributions, the binaries in those directories are built from separate packages coming from different sites on the net. In an embedded system, it doesn't make sense to have to deal with so many packages, nor necessarily have that many separate binaries.
 
+经典的BusyBox包采取的方法是编译一个独立的二进制文件，这个文件实际上是个巨大的switch-case结构，通过检查命令行中第一个参数，决定执行哪个响应功能。这些指令再软链到busybox命令中。例如当输入ls时，实际上还是在执行BusyBox，但BusyBox根据ls这个参数决定它的行为，就如同在标准命令行中运行这个命令一样。
 The approach taken by the classic BusyBox package is to build a single binary that essentially has what amounts to a huge switch-case , which checks for the first parameter on the command line and executes the corresponding functionality. All commands are then made to be symbolic links the busybox command. So when you type ls, for example, you're actually invoking BusyBox. But since BusyBox's behavior is predicated on the first parameter on the command line and that parameter is ls, it will behave as if you had run that command from a standard Linux shell.
 
+安卓没有使用BusyBox，但引入了自己的工具——Toolbox。基本功能也是软链至Toolbox的命令中。不过Toolbox不如BusyBox强大，如果你使用过BusyBox，那基本会对Toolbox很失望。重新创造一个类似的工具似乎和许可有关，毕竟BusyBox是GPL许可。另外，一些安卓开发者们的目标是提供一个基于shell的简洁调试工具，并非与BusyBox一样完全取代shell。而使用BSD许可的Toolbox可以让制造商们在不需要向客户提供源码的前提下进行修改和分发。
 Android doesn't use BusyBox, but includes its own tool, Toolbox, that basically functions in the very same way using symbolic links to the toolbox command. Unfortunately, Toolbox is nowhere as feature-full as BusyBox. In fact, if you've ever used BusyBox, you're likely going to be very disappointed when using Toolbox. The rationale for creating a tool from scratch in this case seems to make most sense when viewed from the licensing angle, BusyBox being GPL licensed. In addition, some Android developers have stated that their goal was to create a minimal tool for shell-based debugging and not to provide a full replacement for shell tools as BusyBox does. At any rate, Toolbox is BSD licensed and manufacturers can therefore modify it and distribute it without having to track the modifications made by their developers or making any sources available to their customers.
 
+你或许还是希望使用BusyBox替换Toolbox。如果由于许可原因，不希望将BusyBox作为定版软件的一部分，也可以暂时将BusyBox打包进系统用来调试，再在释放版本时移除。
 You might still want to include BusyBox alongside Toolbox to benefit from its capabilities. If you don't want to ship it as part of your final product because of its licensing, you could include it temporarily during development and strip it in the final production release. We'll cover this in more detail later.
 
 #### 守护进程 Daemons
 
+作为系统启动的一部分，安卓的init会启动一些守护进程，并跑完整个系统的生命周期。而如*adbd*，则需要取决于全局属性的设置了。
+As part of the system startup, Android's init starts a few key daemons that continue to run throughout the lifetime of the system. Some daemon, such as *adbd*, are started on damand, depending on changes to global properties.
+
+*表 2-4. 安卓原生守护进程*
+*Table 2-4. Native Android daemons*
+Daemon|Description
+-|-
+servicemanager|The Binder Context Manager. Acts as an index of all Binder services running in the system.
+vold|The volume manager. Handles the mounting and formatting of mounted volumes and images.
+netd|The network manager. Handles tethering, NAT, PPP, PAN, and USB RNDIS.
+debugerd|The debugger daemon. Invoked by Bionic's linker when a process crashes to do a postmortem analysis. Allows *gdb* to connect from the host.
+Zygote|The Zygote process. It's responsible for warming up the system's cache and starting the System Server. We'll discuss it in more detail later in this chapter.
+mediaserver|The Media server. Hosts most media-related services. We'll discuss it in more detail later in this chapter.
+dbus-daemon|The D-Bus message daemon. Acts as an inter mediary between D-Bus users. Have a look at its man page for more information.
+bluetooth|The Bluetooth daemon. Manages Bluetooth devices. Provides services through D-Bus.
+installd|The *.apk* installtion daemon. Takes care of installing and uninstalling *.apk* files and managing the related filesystem entries.
+keystore|The KeyStore daemon. Manages an encrypted key-pair value store for cryptographic keys, SSL certs for instance.
+system_server|Android's System Server. This daemon hosts the vast majority of system services that run in Android.
+adbd|The ADB daemon. Manages all aspects of the connection between the target and the host's *adb* command.
+
+#### 命令行组件 Command-Line Utilities
+
+安卓根文件系统中分布着超过150个命令行组件。*/system/bin*中就包含了一大部分，也有一些“额外”的存在*/system/xbin*与*/sbin*中。*/system/bin*中有大约50个组件是*/system/bin/toolbox*的软链。余下的主要来自安卓系统框架，AOSP引入的外部项目或AOSP的其他地方。在第五章可以花时间看看这些二进制文件。
+More than 150 command-line utilities are scattered over Android's root filesystem. */system/bin* contains the majority of them, but some "extras" are in */system/xbin* and a handful are in */sbin*. Around 50 of those in */system/bin* are actually symbolic links to */system/bin/toolbox*. The majority of the rest come from the Android base framewrok, from external projects merged into the AOSP, or from various other parts of the AOSP. We'll get the chance to cover the various binaries found in the AOSP in more detail in Chapter 5.
+
+### Dalvik虚拟机与安卓下的Java Dalvik and Android's Java
+
+简而言之，Dalvik就是安卓的java虚拟机。它允许安卓运行由java编写的应用和系统组件生成的字节码，并向系统提供所需的钩子和环境接口，包含原生链接库与原生用户空间。关于Dalvik和安卓品牌可以扯很远。但为了深入研究，首先需要掌握一些java基础。
+In a untshell, Dalvik is Android's Java virtual machine. It allows Android to run the byte-code generated from Java-based apps and Android's own system components, and proveides both with the requierd hooks and environment to interface with the rest of the system, including native libraries and the rest of the native user-space. There's more to be said about Dalvik and Android's brand of Java, though. But before we can delveinto that explanation, we must first cover some Java basics.
+
+为了不让你们再上一节关于java语言与其起源的历史课，就直接说java是90年代初期由James Gosling在Sun公司创造的。java一经面试就迅速流行起来，在安卓出现就已经足够完善。对于开发者而言，有两点需要牢牢记住：java与C/C++这些传统的编程语言不同，我们常说的“Java”由组件构成。
+Without boring you with yet another histroy lesson on the Java language and its origins, suffice it to say that Java was created by James Gosling at Sun in the early '90s, that it rapidly became very popular, and that it was, in sum, more than well established before Android came around. From a developer perspective, the are two aspects that are important to keep in mind with regard to Java: its differences with a traditional language such as C and C++, and the components that make up what we commonly refer to as "Java."
+
+从设计上看，Java是一种解释性的语言。不同与C/C++，当代码被编译器编译后，变为二进制汇编指令被解释器执行。这些与CPU架构独立的字节码解释器能够在运行时执行字节码，这就是我们常说的“虚拟机”。如此的操作方式与Java语义，使Java中拥有了很多传统语言中不存在的特性，如反射和匿名类。另外，Java也不需要像C/C++那样一直跟踪分配的对象。实际上，它不需要关心任何未使用的对象，因为它自身的垃圾回收机制可以保证一旦没有活动的代码引用后就会将对象销毁。
+By design, Java is an interpreted langeuage. Unlike C and C++, where the code you write gets compiled by a compiler into binary assembly instructions to be executed by a CPU matching the architecture-independent byte-code that is executed at a run-time by a byte-code interpreter, also commonly referred to as a "virtual machine." This modus operandi, along with Java's semantics, enable the language to include quite a few features not traditionally found in previous languages, such as  reflection and anonymous classes. Also, unlike C and C++, Java doesn't require you to keep track of objects you allocate. In fact, it requires you to lose track of all unused objects, since it's got an integrated garbage-collector that will ensure all such objects are destroyed when no active code holds a reference to them any longer.
+
+从使用角度看，Java实际由这些东西组成：Java编译器，Java解释器——通常被成为Java虚拟机（JVM），以及Java链接库，通常被称为Java开发套件（JDK）由甲骨文提供。安卓实际上在编译时使用了JDK，但并没有用到JVM或其链接库。它实际用了Apache的Harmony项目。
+At a practical level, Java is actually made up of a few distinct things: the Java compiler, the Java byte-code interpreter -- more commonly konwn as the Java Virtual Machine (JVM) -- and the Java libraries commonly used by Java Development Kit (JDK) provided free of charge by Oracle. Android actually relies on the JDK for the Java compiler, but it doesn't use the JVM or the libraries, it relies on the Apache Harmony project, a clean-room implementation of the Java libraries hosted under the umbrella of the Apache project.
+
+据开发者Dan Bornstein说，Dalvik是一个为嵌入式系统定制的JVM。它的目标是那些CPU比较慢，内存空间少，跑操作系统不需要交换空间，且使用电池供电的设备。
+According to its developer, Dan Bornstein, Dalvik distinguishes itself form the JVM by being specifically designed for embedded systems. Namely, it targets systems that have slow CPUs and relatively litte RAM, run OSes that don't use swap space, and are battery powered.
+
+相比JVM处理的是*.class*文件，Dalvk更加喜欢*.dex*。*.dex*实际由安卓通过*dx*组件通过Java编译器对*.class*类处理生成。一个未经压缩的*.dex*文件要比原生的*.jar*文件小50%。另一个有趣的事情是，Dalvik基于寄存器，而JVM基于堆栈。除非你是虚拟化或体系结构的学生，亦或者对此非常感兴趣，否则以上内容没有太大意义。
+While the JVM muches on *.class* files, Dalvik prefers the *.dex* delicatessen. *.dex* files are actually generated by postprocessing the *.class* files generated by the Java compiler through Android's *dx* utility. Among other things, an uncompressed *.dex* file is 50% smaller than its originating *.jar* file. Another interesting factoid is that Dalvik is register-based where as the JVM is stack-based, though that is likely to have little to no meaning to you unless you're an avid student of VM theory, architecture, and internals.
+
+Davlik有一个特点非常值得重点关注，从2010年开始，它为ARM加入了即时编译器。这意味着Dalvik将应用的字节码转化为二进制汇编指令并可以运行在原生的目标CPU上，再不是在虚拟机中临时解释每条指令。如此变换可以为今后的特性使用。因此，应用程序会在第一次载入时多花些时间，但是一旦已经被载入过，之后就会更加迅速。唯一需要注意的是，JIT不能被ARM外的架构所使用。所以总而言之，目前运行安卓系统最快的架构就是ARM。
+A feature of Davlik very much worth highlighting, though, is that since 2010 it has included a Just-In-Time (JIT) compiler for ARM. This means that Dalvik converts apps' byte-codes to binary assembly instructions that run natively on the target's CPU instead of being interpreted one instruction at a time by the VM. The result of this conversion is then stored for future use. Hence, apps take longer to load the first time, but once they've been JIT'ed, they load and run much faster. The only caveat here is that JIT isn't available for any other architecture then ARM. So, in sum, the fastest architecture to run Android on is, for now, ARM.
+
+作为一名嵌入式开发人员，让Dalvik跑起来不需要额外做什么特别的事情。Dalvik是以架构独立的方式实现的。早前有报道Dalvik中存在一些字节序的问题，然而早就被解决了。
+ As an embedded developer, you're unlikely to need to do anything specific to get Dalvik to work on your system. Dalvik was written to be architecture-independent. It has been reported that some of the early ports of Dalvik suffered from some endian issues. However, these issues seem to have subsided since.
+
+#### Java原生接口（JNI）Java Native Interface (JNI)
+
+尽管Java强大并且易用，但它总不能自己单打独斗。并且在码代码时还需要调用一些其他语言的接口。尤其在安卓这种嵌入式系统中，总要经常和底层功能打打交道。为了实现这个需求，Java原生接口机制出现了。类似于.NET/C#中的*pinvoke*，它实际上是C/C++这类外部语言的调用入口。
+Despite its power and benefits, Java can't always operate in a vacuum, and code written in Java sometimes needs to interface to code coming from other languages. This is especially true in an embedded environment such as Android, where low-level functionality is never too far away. To that end, the Java Native Interface (JNI) mechanism is provided. It's essentially a call gate to other languages such as C and C++. It's an equivalent to *pinvoke* in the .NET/C# world.
+
+应用程序开发人员有时使用JNI调用一些他们编译的NDK原生代码，就像使用SDK编译Java。其实在AOSP内部就大量使用JNI来让Java编码的服务和组件与C/C++实现的底层功能对接。例如Java编写的系统服务，就使用JNI与对应的原生代码接口通信，从而将服务传达至相应的硬件设备。
+App developers sometimes use JNI to call the native code they compile with the NDK from their regular Java code built using the SDK. Internally, though, the AOSP massively relies on JNI to enable Java-coded services and components to interface with Android's low-level functionality, which is mostly written in C and C++. Java-written system services, for instance, very often use JNI to communicate with matching native code that interfaces with a given service's corresponding hardware.
+
+允许Java通过JNI的方式与其他语言交互，很大部分的功能是由Dalvik提供的。回到上个章节的表2-3中，你会发现*libnativehelper.so*这个库就是由Dalvik提供，便于使用者调用JNI的。
+A large part of the heavy lifting to allow Java to communicate with other languages through JNI is actually done by Dalvik. If you go back to Tbale 2-3 in the previous section, for instacne, you'll notice the *libnativehelper.so* library, which is provided as part of Dalvik for facilitating JNI calls.
+
+在本书稍后部分，我们有机会使用JNI连接Java和C代码。目前阶段，请记住，JNI是安卓系统的核心部分，也是一个使用起来相对复杂的机制。特别要确保调用时正确地给出了语义与参数。
+In later parts of the book, we'll actually get the chance to use JNI to interface Java and C code. For the moment being, keep in mind that JNI is central to platform work in Android and that it can be a relatively complex mechanism to use, especially to make sure you use the appropriate call semantics and function parameters.
+
+![image](https://upload-images.jianshu.io/upload_images/2424151-0d1edd6891b48dac.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+图 2-4. 系统服务
+
+### 系统服务 System Services
+
+系统服务是安卓系统中的幕后人物。就算没有在谷歌开发者文档中特别提及，任何和安卓相关的东西基本都会使用到其中某一个系统服务。这些服务在一起提供了Linux上层的面向对象功能，也就是Binder机制，所有系统服务构建的目的所在。刚才讨论过的原生用户空间就像是安卓系统服务的一个支持环境。所以了解系统服务的存在，知道它们之间及与系统其他部分如何工作是非常重要的。我们已经包含了一些与安卓硬件支持有关的讨论。
+System services are Android's man behind the curtain. Even if they aren't explicily mentioned in Google's app development documentation, anything remotely interesting in Android goes through one of about 50 system services. There services cooperate together to collectively provide what essentially amounts to an object-oriented OS built on top of Linux, which is exactly what Binder -- the mechanism on which all system services are built -- was intended for. The native user-space we just covered is actually designed very much as a support environment for Android's system services. It's therefore crucial to understand what system services exist, and how they interact with each other and with the rest of the system. We've already covered some of this as part of discussing Android's hardware support.
+
+图2-4相较于图2-1第一次详细地展示了系统服务。可以看到这其中包含了很多主要的进程。大部分是系统服务，都跑在*system_server*这个进程下。基本是由一个Java字节码编写的服务与两个C/C++服务组成。系统服务中也包含一些原生代码，经过JNI允许一些基于Java的服务访问系统底层。其他的系统服务位于Media Service中，以*media-server*运行。这些服务都是由C/C++编写，与StageFright及audio effects等多媒体相关的组件一起打包。
+Figure 2-4 illustrates in grater detail the system services first introduced in Figure 2-1. As you can see, there are in fact a couple of major processes involved. Most prominent is the System Server, whose components all run under the sames process, *system_server*, and which is mostly made up of Java-coded services with two services written in C/C++. The System Server also includes some native code access through JNI to allow some of the Java-based services to interface to Android's lower layers. The rest of the system services are housed within the Media Service which runs as *media-server.* These services are all coded in C/C++ and are packaged alongside media-related components such as the StageFright and audio effects.
+
+注意，尽管只有两个进程撑起了整个安卓系统服务，它们都是以独立的方式通过Binder对服务连接。以下是在安卓模拟器中输出的对*service*组件的结果。
+Note that despite there being only two processes to house the entirety of the Android's system services, they all appear to operate independently to anyone connecting to their services through Binder. Here's the output of the *service* utiltiy on the Android emulator:
+
+> **# service list**
+Found 50 servics:
+0    phone: [com.android.internal.telephony.ITelephony]
+1    iphonesubinfo: [com.android.internal.telephony.IPhoneSubInfo]
+2    simphonebook: [com.android.internal.telephony.IIccPhoneBook]
+3    isms: [com.android.internal.telephony.ISms]
+4    diskstats: []
+5    appwidget: [com.android.internal.appwidget.IAppWidgetService]
+6    backup: [android.app.backup.IBackupManager]
+7    uimode: [android.app.IUiModeManager]
+8    usb: [android.hardware.usb.IUsbManager]
+9    audio: [android.media.IAudioService]
+10    wallpaper: [android.app.IWallpaperManager]
+11    dropbox: [com.android.internal.os.IDropBoxManagerService]
+12    search: [android.app.ISearchManager]
+13    location: [android.location.ILocationManager]
+14    devicestoragemonitor: []
+15    notification: [android.app.INotificationManager]
+16    mount: [IMountService]
+17    accessibility: [android.view.accessibility.IAccessibilityManager]
+18    throttle: [android.net.IThrottleManager]
+19    connectivity: [android.net.IConnectivityManager]
+20    wifi: [android.net.wifi.IWifiManager]
+21    network_management: [android.os.INetworkManagementService]
+22    netstat: [android.os.INetStatService]
+23    input_method: [com.android.internal.view.IInputMethodManager]
+24    clipboard: [android.text.IClipboard]
+25    statusbar: [com.android.internal.statusbar.IStatusBarService]
+26    device_policy: [android.app.admin.IDevicePolicyManager]
+27    window: [android.view.IWindowManager]
+28    alarm: [android.app.IAlarmManager]
+29    vibrator: [android.os.IVibratorService]
+30    hardware: [android.os.IHardwareService]
+31    battery: []
+32    content: [android.content.IContentService]
+33    account: [android.accounts.IAccountManager]
+34    permission: [android.os.IPermissionController]
+35    cpuinfo: []
+36    meminfo: []
+37    activity: [android.app.IActivityManager]
+38    package: [android.content.pm.IPackageManager]
+39    telephony.registry: [com.android.internal.telephony.ITelephonyRegistry]
+40    usagestats: [com.android.internal.app.IUsageStats]
+41    batteryinfo: [com.android.internal.app.IBatteryStats]
+42    power: [android.os.IPowerManager]
+43    entropy: []
+44    sensorservice: [android.gui.SensorServer]
+45    SurfaceFlinger: [android.ui.ISurfaceComposer]
+46    media.audio_policy: [android.media.IAudioPolicyService]
+47    media.camera: [android.hardware.ICameraService]
+48    media.player: [android.media.IMediaPlayerService]
+49    media.audio_flinger: [android.media.IAudioFlinger]
+
+目前没有太多文档描述各个服务的操作。感兴趣的话可以看看它们的源码，理解和分析它们是如何相互工作的。
+There is unfortunately not much documentation on how each of these services operates. You'll have to look at each service's source code to get a precise idea of how it works and how it interacts with other services.
+
+
+#### 服务管理器与Binder交互 Service Manager and Binder Interaction
+
+如之前所解释的，Binder机制用于系统服务底层面向对象的远程方法调用。一个系统进程通过Binder调用系统服务，首先需要拿到这个服务的句柄。例如，Binder会让应用开发人员在电源管理中通过**WakeLock**类的**acquire()**方法请求一个休眠唤醒锁，在这个调用完成前，开发人员首先需要获取电源管理服务的句柄。在下一章节可以看到，应用实际上将获取句柄的细节隐藏起来，抽象出了一个接口给开发者，如图2-5所示，所有系统服务句柄查找都是通过服务管理器完成的。
+As I explained earlier, the Binder mechanism used as system services' underlying fabricenables object-oriented remote method invocation. For a process in the system to invoke a system service through Binder, though, it must first have a handle to it. For instance, Binder will enable an app developer to request a wakelock from the Power Manager by invoking the **acquire()** method of its **WakeLock** nested class. Before that call can be made, though, the developer must first get a handle to the Power Manager service. As we'll see in the next section, the app development API actually hides the details of how it gets this handle in an abstraction to the developer, but under the hood all system service handle lookups are done through the Service Manager, as illustrated in Figure 2-5.
+
+![Service Manager and Binder interaction](https://upload-images.jianshu.io/upload_images/2424151-1643d2e062f3ad33.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+*Figure 2-5. Service Manager and Binder interaction*
+
+
+将服务管理器想象成系统中可以服务的黄页，如果一个系统服务没有经过服务管理器注册，那它就无法作用于剩下的系统。为了提供这个检索功能，服务管理器会在所有服务起来前被*init*调起。然后服务管理器再打开*/dev/binder*并使用特殊的**ioctl()**使自己成为Binder的*上下文管理器*（见图2-5中的A1）。此后，系统中任何试图与Binder ID 0（即代码各部分中的“magic”Binder或“magic object”）通信的进程，实际上都是通过Binder在与服务管理器通信。
+Think of the Service Manager as a YellowPages book of all services available in the system. If a system service isn't registered with the Service Manager, it's effectively invisible to the rest of the system. To provide this indexing capability, the Service Manager is started by *init* before any other service. It then opens */dev/binder* and uses a special **ioctl()** call to set itself as the Binder's *Context Manager* ("A1" in Figure 2-5.) Thereafter, any process in the system that attempts to communicate with Binder ID 0 (a.k.a. the "magic" Binder or "magic object" in various parts of the code), is actually communicating through Binder to the Service Manager.
+
+当系统服务起来后，它会通过服务管理器（A2）注册它实例化的每一个服务。之后，当有应用想要访问系统服务，例如电源管理服务，管理器就会问服务（B1）要一个句柄并调用服务的方法（B2）。总之，一个服务组件的调用是应用直接通过Binder（C1）进行的，并不会由服务管理器经手。
+When the System Server starts, for instance, it registers every single service it instantiates with the Service Manager ("A2".) Later, when an app tries to talk to a system service, such as the Power Manager service, it first asks the Service Manager for a handle to the service ("B1") and then invokes that service's methods ("B2"). In contrast, a call to a service component running within an app goes directly through Binder ("C1"), and is noy looked up through the Service Manager.
+
+服务管理器还会由“dumpsys”单元这一特殊方式使用，它能让你把单个或全部系统服务的状态转出来。为了得到所有服务的列表，它会循环获取系统服务（D1），在迭代器中请求n<sup>th</sup>+1直到不存在。它会通过服务管理器定位到有特殊句柄的那个服务（D2），并调用服务的**dump()**函数在终端中打印出状态信息（D3）
+The Service Manager is also used in a special way by the *dumpsys* utility, which allows you to dump the status of a single or all system services. To get the list of all services, it loops around to get every system service ("D1"), requesting the n<sup>th</sup> plus one at every iteration until there aren't anymore. To get each service, it just asks the Service Manager to locate that specific one ("D2".) With a service handle in hand, it invokes that service's **dump()** function to dump its status ("D3") and displays that on the terminal.
+
+#### 调用服务 Calling on Services
+
+上文中解释的这些，基本都是对用户不可见的。下面这一小段示例代码为我们展示应用程序一般是如何申请休眠唤醒锁接口的。
+All of what I just explained is, as I said earlier, almost invisible to the user. Here's a snippet, for instance, that allows us to grab a wakelock within an app using the regular application development API:
+
+> PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "myPerciousWakeLock");
+wakeLock.acquire(100);
+
+可以看到这里没有任何服务管理器的痕迹，取而代之的是通过**getSystemService()**传递了**POWER_SERVICE**参数。当然在内部，**getSystemService()**还是使用服务管理器搜索到电源管理服务，并申请创建了一个休眠唤醒锁。
+Notice that we don't see any hint of the Service Manager here. Instead, we're using **getSystemService()** and passing it the **POWER_SERVICE** parameter. Internally, though, the code that implements **getSystemService()** does actually use the Service Manager to locate the Power Manager service so that we create a wakelock and acquire it.
+
+#### 服务示例：活动管理器 A Service Example: the Activity Manager
+
+虽说介绍每一个系统服务不在本书的范围内，但还是快速过一下活动管理器这个关键的系统服务。活动管理器的资源实际上包含了超过20个文件和两万行代码，非常接近安卓的核心了。它负责启动活动或服务这样的新组件，以及获取内容提供者与上下文广播。如果你之前就见过ANR（应用无响应）对话框。其实活动管理器还参与了内核低内存处理规划，权限以及任务管理等。
+Although covering each and every system service is outside the scope of this book, let's have a quick look at the Activity Manager, one of the key system services. The Activity Manager's sources actually span over 30 files and 20k lines of code. If there's a core to Android's internals, this service is very much near it. It takes care of the starting of new components, such as Activities and Services, along with the fetching of Content Providers and intent broadcasting. If you ever got the dreaded ANR (Application Not Responding) dialog box, know that the Activity Manager was behind it. It's also involved in the maintenance of OOM adjustments used by the in-kernel low-memory handler, permissions, task management, etc.
+
+例如用户在主屏幕上点击应用图标，启动了一个应用程序，首先启动器的**onClick()**回调被调用。启动器会通过Binder告知活动管理服务通过**startActivity()**方法来处理这个事件。服务继而调用**startViaZygote()**方法，通过套接字通知Zygote启动一个活动。在阅读完本章的最后一节后就可以清晰地理解这些操作。
+For instance, when the user clicks on a icon to start an app from his home screen, the first that happens is that the Launcher's * **onClick()** callback is called. To deal with the event, the Launcher will then call, through Binder, the **startActivity()** method of the Activity Manager service. The service will then call the **startViaZygote()** method, which will open a socket to the Zygote and ask it to start the Activity. All this may make more sense after you read the final section of this chapter.
+
+如果你熟悉Linux的内部结构，将安卓文件中的*kernel/*目录理解为Linux的内核源码，这是一个理解活动管理器的好方法。
+If you're familiar with Linux's internals, a good way to think of the Activity Manager is that it's to Android what the content of the *kernel/* directory in the kernel's sources is to Linux. It's that important.
+
+### AOSP应用包 Stock AOSP Packages
+
+在大部分安卓设备中，AOSP都会捆绑几个默认的应用包，在之前章节中也有提到过。如地图、油管、Gmail就不能算在AOSP中。表2-5中列举了AOSP中默认的这些包，表2-6中AOSP中的内容提供者，表2-7中则展示了默认输入法。
+The AOSP ships with a certain number of default packages that are found in most Android devices. As I mentioned in the previous chapter, though, some apps such as Maps, YouTube, and Gmail aren't part of the AOSP. Let's take a look at some of those packages included by default. Table 2-5 lists the stock apps include in the AOSP, Table 2-6 lists the stock content providers included in the AOSP, and Table 2-7 lists the stock IMEs (Input Method Editors) included in the AOSP.
+
+*Table 2-5. Stock AOSP Apps*
+
+App in AOSP|Name displayed in Launcher|Description
+-|-|-
+AccountsAndSettings|N/A|Accounts management app
+Bluetooth|N/A|Bluetooth manager
+Browser|Browser|Default Android browser, includes bookmark widget
+Calculator|Calculator|Calculator app
+Camera|Camera|Camera app
+Certinstaller|N/A|UI for installing certificates
+Contacts|Contacts|Contacts manager app
+DeskClock|Clock|Clock and alarm app, including the clock widget
+Email|Email|Default Android email app
+Development|Dev Tools|Miscellaneous dev tools
+Gallery|Gallery|Default gallery app for viewing pictures
+Gallery3D|Gallery|Fancy gallery with "sexier" UI
+HTMLViewer|N/A|App for viewing HTML files
+Launcher2|N/A|Default home screen
+Mms|Messaging|SMS/MMS app
+Music|Music|Music player
+PackageInstaller|N/A|App install/uninstall UI
+Phone|Phone|Default phone dialer/UI
+Protips|N/A|Home screen tips
+Provision|N/A|App for setting a flag indicating whether a device was provisioned
+QuickSearchBox|Search|Search app and widget
+Settings|Settings|Settings app, also accessible through home screen menu
+SoundRecorder|N/A|Sound recording app
+SpeechRecorder|Speech Recorder|Speech recording app
+SystemUI|N/A|Status bar
+
+*Table 2-6. Stock AOSP Providers*
+
+Provider|Description
+-|-
+ApplicationProvider|Provider for search installed apps
+CalendarProvider|Main Android calendar storage and provider
+ContactsProvider|Main Android contacts storage and provider
+DownloadProvider|Download management, storage and  access
+DmProvider|Management and access of DRM-protected storage
+MediaProvider|Media storage and provider
+TelephonyProvider|Carrier and SMS/MMS storage and provider
+UserDictionnaryProvider|Storage and provider for user-defined words dictionary
+
+
+*Table 2-7. Stock AOSP Input Methods*
+
+Input Methods|Description
+-|-
+LatinIME|Latin keyboard
+OpenWnn|Japanese keyboard
+PinyinIME|Chinese keyboard
+
+
+### 系统启动 System Startup
+
+通过分析安卓启动过程能够很好地把概念融会贯通。如图2-6所示，首先是CPU开始动作。CPU会从某个硬编码地址获取第一条指令，这个地址一般指向芯片的bootloader编程区域。接着bootloader初始化RAM，将基础硬件置为静止状态，加载内核与RAM区域并进入内核。近来的CPU及单芯片外设类的带片上系统设备，已经可以由格式化SD卡等设备上启动了。如pandaBoard和BeagleBorad的新版本就可以直接由SD卡启动，无需依赖板上的存储芯片。
+The best way to bring together all that we discussed is to look at Android's startup. As you can see in Figure 2-6, the first cog to turn is the CPU. It typically has a hard-coded address from which it fetches its first instructions. That address usually points to a chip that has the bootloader programmed on it. The bootloader then initializes the RAM, puts basic hardware in a quiescent state, loads the kernel and RAM disk, and jumps into the kernel. More recent System-on-Chip (SoC) devices, which include a CPU and a slew of peripherials in a single chip, can actually boot straight from a properly formatted SD card or SD-card-like chip. The PandaBoard and recent editions of the BeagleBoard, for instance, don't have any on-board flash chips because they boot straight from an SD card.
+
+内核初始化与硬件密切相关，但它的目的就是尽早地让CPU开始执行C代码。一旦满足条件，内核就能够执行与架构独立的**start_kernel()**方法，初始化一些子系统，并为内核驱动启动"init"方法。内核启动时一大片日志信息就是在这几步中打印的。随后内核开始挂载根文件系统并启动初始化进程。
+The initial kernel startup is very hardware dependent, but its purpose is to set things up so that the CPU can start executing C code as early as possible. Once that's done, the kernel jumps to the architecture-independent **start_kernel()** function, initializes its various subsystems, and proceed to call the "init" functions of all built-in drivers. The majority of messages printed out by the kernel at startup come from these steps. The kernel then mounts its root filesystem and starts the init process.
+
+![Android's boot sequence](https://upload-images.jianshu.io/upload_images/2424151-d9c02705a63ece60.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Android's boot sequence](https://ftp.bmp.ovh/imgs/2019/11/6e5e88880f4f4492.png)
+*Figure 2-6. Android's boot sequence*
+*安卓启动流程*
+
+初始化成功后，安卓开始执行*/init.rc*中的指令并构建起如系统路径的一系列环境变量，创建挂载点，挂载文件系统，设置OOM，启动原生守护进程。我们已经介绍过一些安卓中的原生守护进程，但也值得再花些精力讨论Zygote。Zygote的特殊之处在于它是负责启动应用的守护进程，它会整合应用程序共用的组件以缩短应用打开的时间。初始化并没有直接启动Zygote，而是通过*app_process*命令在ART时启动，ART启动系统第一个Dalvik虚拟机并告诉它调用Zygote的**main()**方法。
+That's when Android's init kicks in and executes the instructions stored in its */init.rc* file to set up environment variables such as the system path, create mount points, mount filesystems, set OOM adjustments, and start native daemons. We've already covered the various native daemons active in Android, but it's worth focusing a little on the Zygote. The Zygote is a special daemon whose job is to launch apps. Its functionality is centralized here in order to unify the components shared by all apps and to shorten
+their start-up time. init doesn't actually start the Zygote directly; instead it uses the *app_process* command to get Zygote started by the Android runtime. The runtime then starts the first Dalvik VM of the system and tells it to invoke the Zygote's **main()**.
+
+Zygote只会在启动新应用时激活。为了实现应用的更快速启动，Zygote会在运行时预加载应用程序所需的Java类和资源。这使得系统RAM载入更加高效。接着，Zygote会在自己的套接字（*/dev/socket/zygote*）上监听启动新应用的连接请求。当它收到启动应用程序的请求时，就会fork一份自己并启动新程序。这个做法的美妙之处在于，应用从Zygote中fork而来就立即拥有了可能需要的类与资源。换言之，一个新应用程序启动不需要等待所需资源的加载与执行。
+Zygote is active only when a new app needs to be launched. To achieve a speedier app launch, the Zygote starts by preloading all Java classes and resources that an app may potentially need at runtime. This effectively loads those into the system's RAM. The Zygote then listens for connections on its socket (*/dev/socket/zygote*) for requests to start new apps. When it gets a request to start an app, it forks itself and launches the new app. The beauty of having all apps fork from the Zygote is that it's a "virgin" VM that has all the system classes and resources an app may need preloaded and ready to be used. In other words, new apps don't have to wait until those are loaded to start executing.
+
+这些努力能够实现，是因为Linux内核为fork提供了~~大奶牛~~写时拷贝策略。在Unix中fork创建的新进程与父进程完全相同。而通过写时拷贝，Linux实际上不需要拷贝任何东西，相反，它将新进程页映射到父进程页，只有当新进程写入这页时才会执行拷贝。其中类与资源加载是不会被写入的，因为它们都是默认的，并且在系统的生命周期中几乎不发生变化。所有直接由Zygote fork进程的本质都是使用自身映射的拷贝。因此，无论系统中跑了多少应用程序，RAM中只会加载一份系统类与资源的拷贝。
+All of this works because the Linux kernel implements a Copy-On-Write (COW) policy for forks. As you may know, forking in Unix involves creating a new process that is an exact same copy of the parent process. With COW, Linux doesn't actually copy anything. Instead, it maps the pages of the new process over to those of the parent process and makes copies only when the new process writes to a page. But in fact the classes and resources loaded are never written to, because they're the default ones and are pretty much immutable within the lifetime of the system. So all processes directly forking from the Zygote are essentially using its own mapped copies. And therefore, regardless of the number of apps running on the system, only one copy of the system classes and the resources is ever loaded in RAM.
+
+尽管Zygote被设计用于监听fork新应用请求的连接，有一个“应用”却是被Zygote显式启动：系统服务器。系统服务器是Zygote启动的第一个应用， 并独立于父进程一直存在。然后系统服务器开始初始化每个系统服务，并注册到之前启动的服务管理器中。如活动管理器启动，就会通过发送**Intent.CATEGORY_HOME**类型意图结束初始化，这将打开启动器程序，继而将用户们熟悉的主界面展示出来。
+Although the Zygote is designed to listen to connections for requests for forking new apps, there is one "app" that the Zygote actually starts explicitly: the System Server. This is the first app started by the Zygote and it continues to live on as an entirely separate process from its parent. The System Server then starts initializing each system service it houses and registering it with the previously-started Service Manager. One of the services it starts, the Activity Manager, will end its initialization by sending an intent of type **Intent.CATEGORY_HOME**. This starts the Launcher app, which then displays the home screen familiar to all Android users.
+
+当用户点击主界面上的图标，启动器告诉活动管理器开启进程，请求被转发给Zygote，由Zygote fork并启动一个新程序，最终能够展示出来。
+When the user clicks on an icon on the home screen, the process I described in “System Services” on page 53 takes place. The Launcher asks the Activity Manager to start the process, which in turn "forwards" that request on to the Zygote, which itself forks and starts the new app, which is then displayed to the user.
+
+一旦系统完成启动，进程列表看起来如下：
+Once the system has finished starting up, the process list will look something like this:
+
+省略了很多，可以自己在终端ps一下
+> **# ps**
+USER PID PPID VSIZE RSS WCHAN PC NAME
+(for example)
+root 1 0 268 180 c009b74c 0000875c S /init
+root 2 0 0 0 0 c004e72c 00000000 S kthreadd
+...
+...
+
+这个输出来自于安卓模拟器，所以包含了如*qemud*这样模拟器特有的进程。注意尽管是由Zygote fork出来，它们是以完整包名展示。有一个小技巧，通过系统的**prctl()**方法带上**PR_SET_NAME**参数可以让内核改变调用进程的名称。如果有兴趣可以看一下**prctl()**的命令手册。另一个需要注意的地方是init启动的第一个进程是*ueventd*。在此之前，所有进程都是由子系统或驱动程序从内核中启动的。
+This output actually comes from the Android emulator, so it contains some emulator-specific artefacts such as the *qemud* daemon. Notice that the apps running all bare their fully-qualified package names despite being forked from the Zygote. This is a neat trick that can be pulled in Linux by using the **prctl()** system call with **PR_SET_NAME** to tell the kernel to change the calling process' name. Have a look at **prctl()**'s man page if you're interested in it. Note also that the first process started by init is actually *ueventd*. All processes prior to that are actually started from within the kernel by subsystems or drivers.
+
 
 ---------------------------
-**未完待续**
+完结撒花❀❀❀
