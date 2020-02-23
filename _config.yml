@@ -80,3 +80,12 @@ deploy:
   type: git
   repo: https://github.com/zengrx/zengrx.github.io
   branch: master
+
+kramed:
+  gfm: true
+  pedantic: false
+  sanitize: false
+  tables: true
+  breaks: true
+  smartLists: true
+  smartypants: false
