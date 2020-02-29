@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="C/C++,cryptography,Feistel," />
+  <meta name="keywords" content="cryptography,C/C++,Feistel," />
 
 
 
@@ -80,7 +80,7 @@
 
 
 <meta name="description" content="Feistel作为现代密码学中构造分组密码的常用对称结构，我很肯定老师在课上重点分析过。对于这个结构，记忆中一直是模糊的位或、16轮、F函数和纠缠在一起的交叉箭头。想来自己的memory palace也是够奇怪了，居然把feistel和round绑在了一起。直到前段时间无聊搞搞ECU通信加密TEA算法玩，看到图解分析的“1 round”才猛然想起feistel，却又记不起基础理论和实现细节。可能当">
-<meta name="keywords" content="C&#x2F;C++,cryptography,Feistel">
+<meta name="keywords" content="cryptography,C&#x2F;C++,Feistel">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Feistel密码结构">
 <meta property="og:url" content="http://yoursite.com/2019/05/13/Feistel-cryptography-architecture/index.html">
@@ -381,7 +381,7 @@ TODO
 <p>Feistel的设计非常精妙，加解密过程使用完全一样的结构，仅初始输入与子密钥调用顺序有区别，所以其加密核心F函数就无需可逆。在软硬件实现上减少了一半的成本。</p>
 <h4 id="那么写写代码巩固理论知识"><a href="#那么写写代码巩固理论知识" class="headerlink" title="那么写写代码巩固理论知识"></a>那么写写代码巩固理论知识</h4><p>DES加密算法作为使用feistel结构的典型应用，其F函数做了扩展运算、P盒与S盒，完整解析相对复杂。这篇文章主旨还是对feistel的总结，所以选择一个更加轻量、F函数更简单的XTEA算法（TEA升级版本）作为示例来用C实现一遍。但是XTEA在加解密中所用的F函数是不同的，见<a href="https://www.bbsmax.com/A/Vx5M9wrv5N/" target="_blank" rel="noopener">这篇</a></p>
 <blockquote>
-<p>关于TEA算法，有种有意思的情况值得引起注意，那就是这个算法不是Feistel密码结构，所以需要分别独立地加密和解密例程。不过，TEA算法在尽可能地接近Feistel密码结构，虽然实际上它并不是–TEA算法使用加法和减法取代了异或运算</p>
+<p>关于TEA算法，有种有意思的情况值得引起注意，那就是这个算法不是Feistel密码结构，所以需要分别独立地加密和解密例程。不过，TEA算法在尽可能地接近Feistel密码结构，虽然实际上它并不是--TEA算法使用加法和减法取代了异或运算</p>
 </blockquote>
 <p>XTEA的加密过程如下图所示</p>
 <p><img src="https://i.bmp.ovh/imgs/2019/06/cbfa4223fba8ceae.png" alt="XTEA"></p>
@@ -426,9 +426,9 @@ TODO
       
         <div class="post-tags">
           
-            <a href="/tags/C-C/" rel="tag"># C/C++</a>
-          
             <a href="/tags/cryptography/" rel="tag"># cryptography</a>
+          
+            <a href="/tags/C-C/" rel="tag"># C/C++</a>
           
             <a href="/tags/Feistel/" rel="tag"># Feistel</a>
           
@@ -536,7 +536,7 @@ TODO
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-count">13</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -549,7 +549,7 @@ TODO
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-count">19</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
@@ -840,6 +840,28 @@ TODO
   
 
   
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
 
   
 

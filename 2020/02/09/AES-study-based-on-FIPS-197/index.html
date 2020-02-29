@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/atom_128.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/atom_32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/atom_16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/atom_logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="cryptography,C/C++,AES,Rijndael," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
+<meta name="keywords" content="cryptography,C&#x2F;C++,AES,Rijndael">
+<meta property="og:type" content="article">
+<meta property="og:title" content="高级加密标准-AES [未完结]">
+<meta property="og:url" content="http://yoursite.com/2020/02/09/AES-study-based-on-FIPS-197/index.html">
+<meta property="og:site_name" content="二又三">
+<meta property="og:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/2424151-0f32283f48a551c0.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-sbox.jpg">
+<meta property="og:updated_time" content="2020-02-29T09:06:44.120Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="高级加密标准-AES [未完结]">
+<meta name="twitter:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/2424151-0f32283f48a551c0.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/09/AES-study-based-on-FIPS-197/"/>
+
+
+
+
+
+  <title>高级加密标准-AES [未完结] | 二又三</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?ce0e7edfdd776d2b784b93d9d7a0a8ac";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">二又三</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">∠(ᐛ」∠)＿</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/09/AES-study-based-on-FIPS-197/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ross Zeng">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/pk.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="二又三">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">高级加密标准-AES [未完结]</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-09T00:55:34+08:00">
+                2020-02-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">全文字数&#58;</span>
+                
+                <span title="全文字数">
+                  3.5k
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  13
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事难料，或许这段日子在未来会被称作为一个特殊的节点。既然说到这里，干脆多说两句，希望日后自己回看时能够想起一些事情。</p>
+<blockquote>
+<p>Be a good man, do the right thing.</p>
+</blockquote>
+<p>保留住美好的品质，与各位共勉</p>
+<a id="more"></a>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>Advanced Encryption Standard，在密码学中表示高级加密标准，采用了比利时密码学家Joan Daeman与Vincent Rijmen所设计的Rijdael算法，严格来说，AES与Rijdael并不能划等号。AES被用于替代逐渐无法满足安全性能要求的DES（Data Encryption Standard）算法。同为对称加密，AES采用了置换-组合的结构，与DES所用的<a href="https://zengrx.github.io/2019/05/13/Feistel-cryptography-architecture/" target="_blank" rel="noopener">feistel结构</a>是完全不同的。<br>文章将以FIPS-197文档为基础理论支撑，第五版密码编码学与网络安全教材作为辅助补充，代码大部分参考matt_wu的<a href="https://github.com/matt-wu/AES/" target="_blank" rel="noopener">开源项目</a>。本文描述的最终实现代码可以在<a href="https://github.com/zengrx/CryptographyReview/tree/master/AES" target="_blank" rel="noopener">这里</a>获取。</p>
+<h3 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h3><p>以教材为例，在进入AES之前会有一个章节专门讲解数论与有限域的基本概念。AES的实现过程中，S盒，轮密钥生成，列混淆等操作都依赖GF(2<sup>8</sup>)中多项式计算。掌握有限域概念及相关多项式模运算过程，才能够理解代码中实现的计算方式与流程。<br><a href="http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf" target="_blank" rel="noopener">FIPS-197</a>有一份非常好的中文翻译版本，有疑惑时可以作为对照参考。此外，第2章定义中的两个小节也是值得认真一看，后文内容与代码实现都基于这些基本定义的描述。</p>
+<h4 id="位操作"><a href="#位操作" class="headerlink" title="位操作"></a>位操作</h4><p>提及位操作算是用现在的眼光对当时的学习经历做一个复盘，就我自己而言，进入到密码学课程时，仍然对很多基础概念的实操不够，没能很好地呼应理论中覆盖的一些知识点。有时甚至觉得我们专业里把int当成最小数据单元的人都不在少数，相比之下，嵌入式方向的同学们对这一块就要熟悉的多了。<br>正如简介中所说，Rijndael用128，192或256 比特长度密钥处理128比特的数据块。所以各个转换过程中少不了位操作参与。<br>与之相关主要提两个地方，一是位运算符，对左移右移位与位或之类的操作至少不要不知所云。二是注意传入参数的数据类型长度，从内存中取值时在这里犯错就非常恶心。例如后文会提到的，对<strong>等效逆变换</strong>过程中改写轮密钥生成函数时，需要注意一处数据类型转换。</p>
+<h4 id="Rijndael-Animation"><a href="#Rijndael-Animation" class="headerlink" title="Rijndael Animation"></a>Rijndael Animation</h4><p><a href="https://formaestudio.com/rijndaelinspector/archivos/rijndaelanimation.html" target="_blank" rel="noopener">这个超经典的AES加密过程动画</a>，接下来要讨论的问题全部都在这个动画中有展示。为了方便比对每一轮中发生的变化是否正确，代码中测试输入也是来自于这里。</p>
+<h4 id="state"><a href="#state" class="headerlink" title="state"></a>state</h4><p>state，就是上小节动画中出现的4行4列小方块，在中文语境中常被译为“体”或“状态矩阵”，如魔方的一个面一般，是轮函数处理数据的一种抽象结构。<br>从下图中下标序号也可以看出，数据是以“列”的方式依次排列在4x4矩阵中。<br><img src="https://upload-images.jianshu.io/upload_images/2424151-0f32283f48a551c0.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="state_in_AES"></p>
+<h3 id="Math-is-the-power"><a href="#Math-is-the-power" class="headerlink" title="Math is the power"></a>Math is the power</h3><h4 id="GF-2n-，多项式，二进制以及字节"><a href="#GF-2n-，多项式，二进制以及字节" class="headerlink" title="GF(2n)，多项式，二进制以及字节"></a>GF(2<sup>n</sup>)，多项式，二进制以及字节</h4><p>与数学有关的讨论最初总是令人望而却步，但深入后又是极有意思的。<br>AES涉及到的计算都落在有限域GF(2<sup>8</sup>)中。有限域的概念在这里就不展开，课本的第4章有详细描述。作为复习，主要说说以下两点：为什么需要阶为素数，即模素数运算？为什么AES要取2<sup>8</sup>？</p>
+<ol>
+<li>首先模算术运算可以确保计算结果落在限定的范围内，即mod p后结果集合的取值区间为[0, p-1]，是有限的。而p取素数则能够保证集合中所有元素都存在加法逆元与乘法逆元，即组成一个域。加法逆元容易满足，乘法逆元令p为一个合数即可反证。</li>
+<li>2<sup>8</sup>的特殊之处在于8个bit位组成了一个字节。用8个二进制位能够表示0到255之间的256个整数。但256不是素数，模256的运算结果无法组成一个域。小于256中的最大素数是251，但是使用251处理数据就浪费了251到255的数值表示，聪明节俭的工程师们是绝对不允许浪费存储空间这种伤天害理的事情发生。那么转机就是GF(2<sup>8</sup>)。当然，单纯的模2<sup>8</sup>与模256没有区别，依旧无法构成域，因此不能使用整数的模算术，需要通过<strong>多项式算术来构造所需的域</strong>，以多项式的系数对应二进制位。</li>
+</ol>
+<p>对于GF(2<sup>n</sup>)中多项式计算，区别于一般的计算方法：其系数只能是0或1；合并同类项时，系数进行异或操作，而非加法操作；加法与减法计算是相同的。如：<br>(x<sup>7</sup>+x<sup>5</sup>+x<sup>2</sup>+x) + (x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+1) = x<sup>7</sup>+x<sup>4</sup>+x+1<br>当然，这里的加号实际指&oplus;。</p>
+<h4 id="加法"><a href="#加法" class="headerlink" title="加法"></a>加法</h4><p>二元加法运算，即模2加法运算，最终等价于对应比特位的异或操作。<br>(0+0) mod 2 = 0  &Longrightarrow;  0&oplus;0 = 0<br>(0+1) mod 2 = 1  &Longrightarrow;  0&oplus;1 = 1<br>(1+0) mod 2 = 1  &Longrightarrow;  1&oplus;0 = 1<br>(1+1) mod 2 = 0  &Longrightarrow;  1&oplus;1 = 0<br>且可证减法与加法结果完全相同。<br>由于这样的特殊性质，加法不需要单独编写一个函数，直接用异或操作符即可简单实现。<br>在多项式中，加法有如下表达：<br>(x<sup>6</sup>+x<sup>4</sup>+x<sup>2</sup>+x+1) + (x<sup>7</sup>+x+1)  = x<sup>7</sup>+x<sup>6</sup>+x<sup>4</sup>+x<sup>2</sup><br>以二进制表示为 { 01010111 } &oplus; { 10000011 } = { 11010100 }<br>十六进制表示为 {57} &oplus; {83} = {d4}</p>
+<h4 id="乘法"><a href="#乘法" class="headerlink" title="乘法"></a>乘法</h4><p>GF(2<sup>8</sup>)上的乘法运算，实质上是多项式的乘积模次数为8的不可约多项式运算。所以在说明该运算时，会反复使用到 m(x) = x<sup>8</sup>+x<sup>4</sup>+x<sup>3</sup>+x+1，这是由作者钦定的多项式。同样，容易理解域内含有256个小于8次的多项式，这些多项式恰好对应了0-255这256个整数。此外，还会经常看到0x1b这个十六进制数的出现。它们之间的联系是一种计算技巧，基于这样一个等式：</p>
+<blockquote>
+<p>在GF(2<sup>n</sup>)中，对于n次多项式p(x)，有 x<sup>n</sup> mod p(x) = p(x) - x<sup>n</sup><br>带入n = 8，有 x<sup>8</sup> mod m(x) = m(x) - x<sup>8</sup> = x<sup>4</sup>+x<sup>3</sup>+x+1</p>
+</blockquote>
+<p>在之前的章节中提到过，多项式形式表达是将二进制比特位的值对应到多项式的系数，那么m(x)对应的二进制数为(0000 0001 0001 1011)，表达为0x11b。m(x)是一个8次多项式，转化后是0x11b而不是0x1b。现在将单项式x<sup>n</sup>扩展为多项式p(x)。</p>
+<blockquote>
+<p>存在GF(2<sup>8</sup>)中的多项式p(x) = a<sub>7</sub>x<sup>7</sup>+a<sub>6</sub>x<sup>6</sup>+a<sub>5</sub>x<sup>5</sup>+a<sub>4</sub>x<sup>4</sup>+a<sub>3</sub>x<sup>3</sup>+a<sub>2</sub>x<sup>2</sup>+a<sub>1</sub>x+a<sub>0</sub><br>因多项式p(x)已处于域内无需额外运算，令p&#39;(x) = p(x)$\cdot$x，有p&#39;(x) = a<sub>7</sub>x<sup>8</sup>+a<sub>6</sub>x<sup>7</sup>+a<sub>5</sub>x<sup>6</sup>+a<sub>4</sub>x<sup>5</sup>+a<sub>3</sub>x<sup>4</sup>+a<sub>2</sub>x<sup>3</sup>+a<sub>1</sub>x<sup>2</sup>+a<sub>0</sub>x<br>注意系数的取值只有0与1。<br>当a<sub>7</sub>为0时，p&#39;(x)次数为7，同样无需额外运算，直接得到结果为a<sub>6</sub>x<sup>7</sup>+a<sub>5</sub>x<sup>6</sup>+a<sub>4</sub>x<sup>5</sup>+a<sub>3</sub>x<sup>4</sup>+a<sub>2</sub>x<sup>3</sup>+a<sub>1</sub>x<sup>2</sup>+a<sub>0</sub>x<br>当a<sub>7</sub>为1时，根据之前引用的既约多项式与n次模算术运算，有p&#39;(x) mod m(x) = (a<sub>6</sub>x<sup>7</sup>+a<sub>5</sub>x<sup>6</sup>+a<sub>4</sub>x<sup>5</sup>+a<sub>3</sub>x<sup>4</sup>+a<sub>2</sub>x<sup>3</sup>+a<sub>1</sub>x<sup>2</sup>+a<sub>0</sub>x) + (x<sup>4</sup>+x<sup>3</sup>+x+1)</p>
+</blockquote>
+<p>将多项式系数对应到二进制比特位，则有：</p>
+<script type="math/tex; mode=display">
+x\cdot p(x)
+\begin{cases}
+\ a_6 a_5 a_4 a_3 a_2 a_1 a_0, &\ a7 \ =0\\
+(a_6 a_5 a_4 a_3 a_2 a_1 a_0) \oplus (0001 1011), &\  a7\ =1\
+\end{cases} \tag{1}</script><p>那么当a<sub>7</sub> = 1时，式中的(0001 1011)即为0x1b。这个值是给定的既约多项式在有限域GF(2<sup>8</sup>)中计算的必然结果。以上就是代码中0x1b的来源。</p>
+<p>为了加深印象，先用最淳la朴ji的方法计算{a6}与{59}在GF(2<sup>8</sup>)中的乘法结果，再通过下一小节熟悉如何使用0x1b取得相同的结果。</p>
+<p>首先将hex转化为多项式，{a6}为(1010 0110)，对应x<sup>7</sup>+x<sup>5</sup>+x<sup>2</sup>+x<br>{59}则为(0101 1001)，对应x<sup>6</sup>+x<sup>4</sup>+x<sup>3</sup>+1<br>(x<sup>7</sup>+x<sup>5</sup>+x<sup>2</sup>+x)$\cdot$(x<sup>6</sup>+x<sup>4</sup>+x<sup>3</sup>+1)<br>= x<sup>13</sup>+x<sup>11</sup>+x<sup>11</sup>+x<sup>10</sup>+x<sup>9</sup>+x<sup>8</sup>+x<sup>8</sup>+x<sup>7</sup>+x<sup>7</sup>+x<sup>6</sup>+x<sup>5</sup>+x<sup>5</sup>+x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+x<br>= x<sup>13</sup>+<del>x<sup>11</sup>+x<sup>11</sup></del>+x<sup>10</sup>+x<sup>9</sup>+<del>x<sup>8</sup>+x<sup>8</sup></del>+<del>x<sup>7</sup>+x<sup>7</sup></del>+x<sup>6</sup>+<del>x<sup>5</sup>+x<sup>5</sup></del>+x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+x<br>= x<sup>13</sup>+x<sup>10</sup>+x<sup>9</sup>+x<sup>6</sup>+x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+x<br>in GF(2<sup>8</sup>)，将乘积做模运算，过程如下图<br><img src="" alt="tu"><br>可以算出 {a6}$\cdot${59} = {61}<br>代码中肯定不能以这种试商法来实现，所以引出了下一节，乘X。</p>
+<script type="math/tex; mode=display">
+\left[
+\begin{matrix}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9 
+\end{matrix} \right]\tag{2}</script><h4 id="乘X"><a href="#乘X" class="headerlink" title="乘X"></a>乘X</h4><p>抓住本质，乘法就是多个相同数字求和的简便运算。而口诀表，是人们创造出来以节约时间的查表法，牺牲存储空间换取速度。通过乘X的方法，多项式任意指数都可以通过递归调用公式1获得。<br>概括为以下两点：</p>
+<ul>
+<li>00 - FF 中所有的数都可以通过以下八个数的组合位运算得到<br>1000 0000  &Longrightarrow;  0x80<br>0100 0000  &Longrightarrow;  0x40<br>0010 0000  &Longrightarrow;  0x20<br>0001 0000  &Longrightarrow;  0x10<br>0000 1000  &Longrightarrow;  0x08<br>0000 0100  &Longrightarrow;  0x04<br>0000 0010  &Longrightarrow;  0x02<br>0000 0001  &Longrightarrow;  0x01</li>
+</ul>
+<ul>
+<li>乘法是加法的组合，在GF(2<sup>8</sup>)将加法与乘法对应表达为&oplus;与$\cdot$</li>
+</ul>
+<p>仍然计算{a6}$\cdot${59}，过程如下：<br>$\because$ {59} 由 {40}&oplus;{10}&oplus;{08}&oplus;{01} 构成<br>$\therefore$ {a6}$\cdot${59} = {a6}$\cdot$({40}&oplus;{10}&oplus;{08}&oplus;{01})<br>计算所有中间值<br>{a6}$\cdot${01} = {a6}<br>{a6}$\cdot${02} = xtime({a6}) = {57}<br>{a6}$\cdot${04} = xtime({57}) = {ae}<br>{a6}$\cdot${08} = xtime({ae}) = {47}<br>{a6}$\cdot${10} = xtime({47}) = {8e}<br>{a6}$\cdot${20} = xtime({8e}) = {07}<br>{a6}$\cdot${40} = xtime({07}) = {0e}<br>{a6}$\cdot${80} = xtime({0e}) = {1c}<br>带入右式展开<br>{a6}$\cdot${59}<br>= ({a6}$\cdot${40})&oplus;({a6}$\cdot${10})&oplus;({a6}$\cdot${08})&oplus;({a6}$\cdot${01})<br>= {a6}&oplus;{47}&oplus;{8e}&oplus;{0e}<br>= {61}</p>
+<p>在C中，使用移位与异或运算可以很容易地实现。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//多项式在GF256中的运算</span></span><br><span class="line"><span class="keyword">uint8_t</span> GF256_xtime(<span class="keyword">uint8_t</span> x)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> ((x &lt;&lt; <span class="number">1</span>) ^ (((x &gt;&gt; <span class="number">7</span>) &amp; <span class="number">1</span>) * <span class="number">0x1b</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//AES定义的乘X运算</span></span><br><span class="line"><span class="comment">//参数ts代表移多少次位，取值为0-7</span></span><br><span class="line"><span class="keyword">uint8_t</span> aes_xtimes(<span class="keyword">uint8_t</span> x, <span class="keyword">int</span> ts)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">while</span> (ts-- &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        x = GF256_xtime(x);</span><br><span class="line">    &#125;</span><br><span class="line">   </span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//GF(2^8)中的多项式乘法运算</span></span><br><span class="line"><span class="comment">//参数x做“乘X”运算，获取所有中间值</span></span><br><span class="line"><span class="comment">//再与多项式y中系数为1的项做异或</span></span><br><span class="line"><span class="keyword">uint8_t</span> aes_mul(<span class="keyword">uint8_t</span> x, <span class="keyword">uint8_t</span> y)</span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">return</span> ((((y &gt;&gt; <span class="number">0</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">0</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">1</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">1</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">2</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">2</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">3</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">3</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">4</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">4</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">5</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">5</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">6</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">6</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">7</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">7</span>)) );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="带系数的多项式"><a href="#带系数的多项式" class="headerlink" title="带系数的多项式"></a>带系数的多项式</h4><h3 id="AES"><a href="#AES" class="headerlink" title="AES"></a>AES</h3><p>我们可以找到很多AES总体结构的说明图片，为了让这篇文章显得长一点，也放一张吧<br><img src="" alt="AES_process"><br>我一直在想，当然这个想法应该是看油管印度街头小吃视频启发的，AES有点像三哥们煮的糊糊，一边处理食材另一边处理酱料，处理好之后倒在一起一通乱搅，然后接着处理2号食材处理2号酱料再一搅，如此循环个10轮就是AES-128了，反正最后端出来没人知道究竟是什么做的。相比之下DES像麻花，左右两段扭在一起炸至金黄酥脆。扯远了扯远了 (*ˉ﹃ˉ) 。<br>在理解AES的时候，可以把上面的结构说明拆成两大部分，分别为加解密过程与密钥策略。在FIPS-197的第五章中，是以5.1加密，5.2密钥扩展，5.3解密的顺序描述。在这里先聊前两个过程。</p>
+<h4 id="PART-A-加密过程"><a href="#PART-A-加密过程" class="headerlink" title="PART A 加密过程"></a>PART A 加密过程</h4><h5 id="SubBytes"><a href="#SubBytes" class="headerlink" title="SubBytes"></a>SubBytes</h5><p>SubBytes被译为字节替代，替代的来源就是老师反复会提及的S盒。关于用S盒，我在参考文献中贴了一篇看雪的帖子，个人认为非常值得一读。<br>SubBytes在整个算法中充当非线性变换作用，说枯燥一点，它做了GF(2<sup>8</sup>)中的乘法逆运算与GF(2)中的仿射变换，选择一个足够好的S盒并不容易。我想在这里做得功利一点，先不讨论S盒的原理，直接查表可得，否则这节不知道要写多长。<br>那么这个16行16列的盒子为域内所有的256个元素都准备了一套新马甲：<br><img src="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-sbox.jpg" alt="S盒"><br>代码实现为<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//5.1.1 SubBytes</span></span><br><span class="line"><span class="comment">//使用S盒替换原始数据</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">aes_sub_bytes</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *state)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, j;</span><br><span class="line">   <span class="comment">//4行4列的state</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; <span class="number">4</span>; j++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">//把值给S盒的下标取出新值</span></span><br><span class="line">            state[i * <span class="number">4</span> + j] = sbox(state[i * <span class="number">4</span> + j]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p> <strong>-- 未完待续 --</strong></p>
+<h5 id="ShiftRows"><a href="#ShiftRows" class="headerlink" title="ShiftRows"></a>ShiftRows</h5><h5 id="MixColumns"><a href="#MixColumns" class="headerlink" title="MixColumns"></a>MixColumns</h5><h5 id="AddRoundKey"><a href="#AddRoundKey" class="headerlink" title="AddRoundKey"></a>AddRoundKey</h5><h4 id="PART-B-密钥策略"><a href="#PART-B-密钥策略" class="headerlink" title="PART B 密钥策略"></a>PART B 密钥策略</h4><h5 id="KeyExpansion"><a href="#KeyExpansion" class="headerlink" title="KeyExpansion"></a>KeyExpansion</h5><h3 id="输出实例"><a href="#输出实例" class="headerlink" title="输出实例"></a>输出实例</h3><h3 id="还有一些问题"><a href="#还有一些问题" class="headerlink" title="还有一些问题"></a>还有一些问题</h3><h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><ol>
+<li><a href="http://blog.dynox.cn/?p=1562" target="_blank" rel="noopener">AES标准及Rijndael算法解析</a></li>
+<li><a href="http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf" target="_blank" rel="noopener">FIPS-197</a></li>
+<li><a href="https://formaestudio.com/rijndaelinspector/archivos/rijndaelanimation.html" target="_blank" rel="noopener">Rijndael_Animation_v4_eng</a></li>
+<li><a href="https://blog.csdn.net/luotuo44/article/details/41645597" target="_blank" rel="noopener">有限域GF(2^8)的四则运算及拉格朗日插值</a></li>
+<li><a href="https://bbs.pediy.com/thread-253916.htm" target="_blank" rel="noopener">AES中S盒的生成原理与变化</a></li>
+<li><a href="https://blog.csdn.net/u011241780/article/details/80589273" target="_blank" rel="noopener">手动推导计算AES中的s盒的输出</a></li>
+<li><a href="https://crypto.stackexchange.com/questions/10996/how-are-the-aes-s-boxes-calculated" target="_blank" rel="noopener">How are the AES S-Boxes calculated</a></li>
+<li><a href="https://crypto.stackexchange.com/questions/15850/why-is-the-polynomial-in-aes-mixcolumns-multiplied-modulo-a-reducible-polynomial" target="_blank" rel="noopener">polynomial in AES MixColumns</a></li>
+<li><a href="http://www.moserware.com/2009/09/stick-figure-guide-to-advanced.html" target="_blank" rel="noopener">Figure Guide AES</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/cryptography/" rel="tag"># cryptography</a>
+          
+            <a href="/tags/C-C/" rel="tag"># C/C++</a>
+          
+            <a href="/tags/AES/" rel="tag"># AES</a>
+          
+            <a href="/tags/Rijndael/" rel="tag"># Rijndael</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/08/07/summertime-sadness/" rel="next" title="六月是离别，九月是重逢与新生">
+                <i class="fa fa-chevron-left"></i> 六月是离别，九月是重逢与新生
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/02/23/Pz-Kpfw-IV-Ausf-J-late-production-scale-model/" rel="prev" title="麦田4号坦克J后期型模型制作 [未完结]">
+                麦田4号坦克J后期型模型制作 [未完结] <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/pk.png"
+                alt="Ross Zeng" />
+            
+              <p class="site-author-name" itemprop="name">Ross Zeng</p>
+              <p class="site-description motion-element" itemprop="description">Nothing really matters</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/zengrx" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/rx_z" target="_blank" title="OSChina">
+                    
+                      <i class="fa fa-fw fa-globe"></i>OSChina</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://steamcommunity.com/id/zengrx/" target="_blank" title="Steam">
+                    
+                      <i class="fa fa-fw fa-steam"></i>Steam</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.instagram.com/zeng_rx/" target="_blank" title="Instagram">
+                    
+                      <i class="fa fa-fw fa-instagram"></i>Instagram</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yarrow1995.github.io/" title="Madoka酱" target="_blank">Madoka酱</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x6982;&#x8FF0;" class="headerlink" title="&#x6982;&#x8FF0;"></a>&#x6982;&#x8FF0;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#预备知识"><span class="nav-number">2.</span> <span class="nav-text"><a href="#&#x9884;&#x5907;&#x77E5;&#x8BC6;" class="headerlink" title="&#x9884;&#x5907;&#x77E5;&#x8BC6;"></a>&#x9884;&#x5907;&#x77E5;&#x8BC6;</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#位操作"><span class="nav-number">2.1.</span> <span class="nav-text"><a href="#&#x4F4D;&#x64CD;&#x4F5C;" class="headerlink" title="&#x4F4D;&#x64CD;&#x4F5C;"></a>&#x4F4D;&#x64CD;&#x4F5C;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Rijndael-Animation"><span class="nav-number">2.2.</span> <span class="nav-text"><a href="#Rijndael-Animation" class="headerlink" title="Rijndael Animation"></a>Rijndael Animation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#state"><span class="nav-number">2.3.</span> <span class="nav-text"><a href="#state" class="headerlink" title="state"></a>state</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Math-is-the-power"><span class="nav-number">3.</span> <span class="nav-text"><a href="#Math-is-the-power" class="headerlink" title="Math is the power"></a>Math is the power</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#GF-2n-，多项式，二进制以及字节"><span class="nav-number">3.1.</span> <span class="nav-text"><a href="#GF-2n-&#xFF0C;&#x591A;&#x9879;&#x5F0F;&#xFF0C;&#x4E8C;&#x8FDB;&#x5236;&#x4EE5;&#x53CA;&#x5B57;&#x8282;" class="headerlink" title="GF(2n)&#xFF0C;&#x591A;&#x9879;&#x5F0F;&#xFF0C;&#x4E8C;&#x8FDB;&#x5236;&#x4EE5;&#x53CA;&#x5B57;&#x8282;"></a>GF(2<sup>n</sup>)&#xFF0C;&#x591A;&#x9879;&#x5F0F;&#xFF0C;&#x4E8C;&#x8FDB;&#x5236;&#x4EE5;&#x53CA;&#x5B57;&#x8282;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#加法"><span class="nav-number">3.2.</span> <span class="nav-text"><a href="#&#x52A0;&#x6CD5;" class="headerlink" title="&#x52A0;&#x6CD5;"></a>&#x52A0;&#x6CD5;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#乘法"><span class="nav-number">3.3.</span> <span class="nav-text"><a href="#&#x4E58;&#x6CD5;" class="headerlink" title="&#x4E58;&#x6CD5;"></a>&#x4E58;&#x6CD5;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#乘X"><span class="nav-number">3.4.</span> <span class="nav-text"><a href="#&#x4E58;X" class="headerlink" title="&#x4E58;X"></a>&#x4E58;X</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#带系数的多项式"><span class="nav-number">3.5.</span> <span class="nav-text"><a href="#&#x5E26;&#x7CFB;&#x6570;&#x7684;&#x591A;&#x9879;&#x5F0F;" class="headerlink" title="&#x5E26;&#x7CFB;&#x6570;&#x7684;&#x591A;&#x9879;&#x5F0F;"></a>&#x5E26;&#x7CFB;&#x6570;&#x7684;&#x591A;&#x9879;&#x5F0F;</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AES"><span class="nav-number">4.</span> <span class="nav-text"><a href="#AES" class="headerlink" title="AES"></a>AES</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#PART-A-加密过程"><span class="nav-number">4.1.</span> <span class="nav-text"><a href="#PART-A-&#x52A0;&#x5BC6;&#x8FC7;&#x7A0B;" class="headerlink" title="PART A &#x52A0;&#x5BC6;&#x8FC7;&#x7A0B;"></a>PART A &#x52A0;&#x5BC6;&#x8FC7;&#x7A0B;</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#SubBytes"><span class="nav-number">4.1.1.</span> <span class="nav-text"><a href="#SubBytes" class="headerlink" title="SubBytes"></a>SubBytes</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ShiftRows"><span class="nav-number">4.1.2.</span> <span class="nav-text"><a href="#ShiftRows" class="headerlink" title="ShiftRows"></a>ShiftRows</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#MixColumns"><span class="nav-number">4.1.3.</span> <span class="nav-text"><a href="#MixColumns" class="headerlink" title="MixColumns"></a>MixColumns</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#AddRoundKey"><span class="nav-number">4.1.4.</span> <span class="nav-text"><a href="#AddRoundKey" class="headerlink" title="AddRoundKey"></a>AddRoundKey</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PART-B-密钥策略"><span class="nav-number">4.2.</span> <span class="nav-text"><a href="#PART-B-&#x5BC6;&#x94A5;&#x7B56;&#x7565;" class="headerlink" title="PART B &#x5BC6;&#x94A5;&#x7B56;&#x7565;"></a>PART B &#x5BC6;&#x94A5;&#x7B56;&#x7565;</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#KeyExpansion"><span class="nav-number">4.2.1.</span> <span class="nav-text"><a href="#KeyExpansion" class="headerlink" title="KeyExpansion"></a>KeyExpansion</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#输出实例"><span class="nav-number">5.</span> <span class="nav-text"><a href="#&#x8F93;&#x51FA;&#x5B9E;&#x4F8B;" class="headerlink" title="&#x8F93;&#x51FA;&#x5B9E;&#x4F8B;"></a>&#x8F93;&#x51FA;&#x5B9E;&#x4F8B;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#还有一些问题"><span class="nav-number">6.</span> <span class="nav-text"><a href="#&#x8FD8;&#x6709;&#x4E00;&#x4E9B;&#x95EE;&#x9898;" class="headerlink" title="&#x8FD8;&#x6709;&#x4E00;&#x4E9B;&#x95EE;&#x9898;"></a>&#x8FD8;&#x6709;&#x4E00;&#x4E9B;&#x95EE;&#x9898;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文献"><span class="nav-number">7.</span> <span class="nav-text"><a href="#&#x53C2;&#x8003;&#x6587;&#x732E;" class="headerlink" title="&#x53C2;&#x8003;&#x6587;&#x732E;"></a>&#x53C2;&#x8003;&#x6587;&#x732E;</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ross Zeng</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a></div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+</body>
+</html>
