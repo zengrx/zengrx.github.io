@@ -82,19 +82,20 @@
 <meta name="description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
 <meta name="keywords" content="cryptography,C&#x2F;C++,AES,Rijndael">
 <meta property="og:type" content="article">
-<meta property="og:title" content="高级加密标准-AES [未完结]">
+<meta property="og:title" content="高级加密标准-AES [===_______|30%]">
 <meta property="og:url" content="http://yoursite.com/2020/02/09/AES-study-based-on-FIPS-197/index.html">
 <meta property="og:site_name" content="二又三">
 <meta property="og:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://upload-images.jianshu.io/upload_images/2424151-0f32283f48a551c0.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/03/eadd829da1e58138.jpg">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/03/f5de9b1d18eb990e.jpg">
 <meta property="og:image" content="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-Flow.png">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/03/9f746aefafb30598.png">
 <meta property="og:image" content="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-sbox.jpg">
-<meta property="og:updated_time" content="2020-03-03T17:44:04.382Z">
+<meta property="og:updated_time" content="2020-03-04T16:36:20.662Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="高级加密标准-AES [未完结]">
+<meta name="twitter:title" content="高级加密标准-AES [===_______|30%]">
 <meta name="twitter:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
 <meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/2424151-0f32283f48a551c0.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 
@@ -132,7 +133,7 @@
 
 
 
-  <title>高级加密标准-AES [未完结] | 二又三</title>
+  <title>高级加密标准-AES [===_______|30%] | 二又三</title>
   
 
 
@@ -286,7 +287,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">高级加密标准-AES [未完结]</h1>
+          <h1 class="post-title" itemprop="name headline">高级加密标准-AES [===_______|30%]</h1>
         
 
         <div class="post-meta">
@@ -330,7 +331,7 @@
                   <span class="post-meta-item-text">全文字数&#58;</span>
                 
                 <span title="全文字数">
-                  4.1k
+                  4.5k
                 </span>
               
 
@@ -346,7 +347,7 @@
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
                 <span title="阅读时长">
-                  16
+                  18
                 </span>
               
             </div>
@@ -378,12 +379,12 @@
 <h4 id="位操作"><a href="#位操作" class="headerlink" title="位操作"></a>位操作</h4><p>提及位操作算是用现在的眼光对当时的学习经历做一个复盘，就我自己而言，进入到密码学课程时，仍然对很多基础概念的实操不够，没能很好地呼应理论中覆盖的一些知识点。有时甚至觉得我们专业里把int当成最小数据单元的人都不在少数，相比之下，嵌入式方向的同学们对这一块就要熟悉的多了。<br>正如简介中所说，Rijndael用128，192或256 比特长度密钥处理128比特的数据块。所以各个转换过程中少不了位操作参与。<br>与之相关主要提两个地方，一是位运算符，对左移右移位与位或之类的操作至少不要不知所云。二是注意传入参数的数据类型长度，从内存中取值时在这里犯错就非常恶心。例如后文会提到的，对<strong>等效逆变换</strong>过程中改写轮密钥生成函数时，需要注意一处数据类型转换。</p>
 <h4 id="Rijndael-Animation"><a href="#Rijndael-Animation" class="headerlink" title="Rijndael Animation"></a>Rijndael Animation</h4><p><a href="https://formaestudio.com/rijndaelinspector/archivos/rijndaelanimation.html" target="_blank" rel="noopener">这个超经典的AES加密过程动画</a>，接下来要讨论的问题全部都在这个动画中有展示。为了方便比对每一轮中发生的变化是否正确，代码中测试输入也是来自于这里。</p>
 <h4 id="state"><a href="#state" class="headerlink" title="state"></a>state</h4><p>state，就是上小节动画中出现的4行4列小方块，在中文语境中常被译为“体”或“状态矩阵”，如魔方的一个面一般，是轮函数处理数据的一种抽象结构。<br>从下图中下标序号也可以看出，数据是以“列”的方式依次排列在4x4矩阵中。<br><img src="https://upload-images.jianshu.io/upload_images/2424151-0f32283f48a551c0.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="state_in_AES"></p>
-<h3 id="III-Math-is-the-power"><a href="#III-Math-is-the-power" class="headerlink" title="III. Math is the power"></a>III. Math is the power</h3><h4 id="GF-2n-，多项式，二进制以及字节"><a href="#GF-2n-，多项式，二进制以及字节" class="headerlink" title="GF(2n)，多项式，二进制以及字节"></a>GF(2<sup>n</sup>)，多项式，二进制以及字节</h4><p>与数学有关的讨论最初总是令人望而却步，但深入后又是极有意思的。<br>AES涉及到的计算都落在有限域GF(2<sup>8</sup>)中。有限域的概念在这里就不展开，课本的第4章有详细描述。作为复习，主要说说以下两点：为什么需要阶为素数，即模素数运算？为什么AES要取2<sup>8</sup>？</p>
+<h3 id="III-Math-is-the-power"><a href="#III-Math-is-the-power" class="headerlink" title="III. Math is the power"></a>III. Math is the power</h3><h4 id="GF-2n-，多项式，二进制以及字节"><a href="#GF-2n-，多项式，二进制以及字节" class="headerlink" title="GF(2n)，多项式，二进制以及字节"></a>GF(2<sup>n</sup>)，多项式，二进制以及字节</h4><p>与数学有关的讨论最初往往令人望而却步，但深入后又是极有意思的。<br>AES涉及到的计算都落在有限域GF(2<sup>8</sup>)中。有限域的概念在这里就不展开，课本的第4章有详细描述。作为复习，主要说说以下两点：为什么需要阶为素数，即模素数运算？为什么AES要取2<sup>8</sup>？</p>
 <ol>
 <li>首先模算术运算可以确保计算结果落在限定的范围内，即mod p后结果集合的取值区间为[0, p-1]，是有限的。而p取素数则能够保证集合中所有元素都存在加法逆元与乘法逆元，即组成一个域。加法逆元容易满足，乘法逆元令p为一个合数即可反证。</li>
-<li>2<sup>8</sup>的特殊之处在于8个bit位组成了一个字节。用8个二进制位能够表示0到255之间的256个整数。但256不是素数，模256的运算结果无法组成一个域。小于256中的最大素数是251，但是使用251处理数据就浪费了251到255的数值表示，聪明节俭的工程师们是绝对不允许浪费存储空间这种伤天害理的事情发生。那么转机就是GF(2<sup>8</sup>)。当然，单纯的模2<sup>8</sup>与模256没有区别，依旧无法构成域，因此不能使用整数的模算术，需要通过<strong>多项式算术来构造所需的域</strong>，以多项式的系数对应二进制位。</li>
+<li>2<sup>8</sup>的特殊之处在于8个bit位组成了一个字节。用8个二进制位能够表示0到255之间的256个整数。但256不是素数，模256的运算结果无法组成一个域。小于256中的最大素数是251，但是使用251处理数据就浪费了251到255的数值表示，聪明节俭的工程师们是绝对不允许浪费存储空间这种伤天害理的事情发生。那么转机就是GF(2<sup>8</sup>)。当然，单纯的模2<sup>8</sup>与模256没有区别，依旧无法构成域，因此不能使用整数的模算术，需要通过<strong>多项式算术来构造所需的域</strong>，以多项式的系数对应比特值。</li>
 </ol>
-<p>对于GF(2<sup>n</sup>)中多项式计算，区别于一般的计算方法：其系数只能是0或1；合并同类项时，系数进行异或操作，而非加法操作；加法与减法计算是相同的。如：<br>(x<sup>7</sup>+x<sup>5</sup>+x<sup>2</sup>+x) + (x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+1) = x<sup>7</sup>+x<sup>4</sup>+x+1<br>当然，这里的加号实际指&oplus;。</p>
+<p>为了使系数对应二进制比特位，区别于一般的计算方法，需要使系数落在GF(2)上，即执行模2算术，所以系数取值只能为0或1；合并同类项时，系数进行异或操作，而非加法操作；加法与减法计算是相同的。如：<br>(x<sup>7</sup>+x<sup>5</sup>+x<sup>2</sup>+x) + (x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+1) = x<sup>7</sup>+x<sup>4</sup>+x+1<br>当然，这里的加号实际指&oplus;。<br>而处理四字节字(word)的时候，多项式系数又代表了域内的字节值，加法执行字节间的异或操作。乘法则根据降次的需求选取特定的模多项式，进行模运算。<br>那么本章各小节将对涉及到的基本数学概念与计算做相关描述。</p>
 <h4 id="加法"><a href="#加法" class="headerlink" title="加法"></a>加法</h4><p>本节的加法特指二元加法运算，即模2加法运算，最终等价于对应比特位的异或操作。<br>(0+0) mod 2 = 0  &Longrightarrow;  0&oplus;0 = 0<br>(0+1) mod 2 = 1  &Longrightarrow;  0&oplus;1 = 1<br>(1+0) mod 2 = 1  &Longrightarrow;  1&oplus;0 = 1<br>(1+1) mod 2 = 0  &Longrightarrow;  1&oplus;1 = 0<br>且可证减法与加法结果完全相同。<br>由于这样的特殊性质，加法不需要单独编写一个函数，直接用异或操作符即可简单实现。<br>在多项式中，加法有如下表达：<br>(x<sup>6</sup>+x<sup>4</sup>+x<sup>2</sup>+x+1) + (x<sup>7</sup>+x+1)  = x<sup>7</sup>+x<sup>6</sup>+x<sup>4</sup>+x<sup>2</sup><br>以二进制表示为 { 01010111 } &oplus; { 10000011 } = { 11010100 }<br>十六进制表示为 {57} &oplus; {83} = {d4}</p>
 <h4 id="乘法"><a href="#乘法" class="headerlink" title="乘法"></a>乘法</h4><p>GF(2<sup>8</sup>)上的乘法运算，实质上是多项式的乘积模次数为8的不可约多项式运算。所以在说明该运算时，会反复使用到 m(x) = x<sup>8</sup>+x<sup>4</sup>+x<sup>3</sup>+x+1，这是由作者钦定的多项式。同样，容易理解域内含有256个小于8次的多项式，这些多项式恰好对应了0-255这256个整数。此外，还会经常看到0x1b这个十六进制数的出现。它们之间的联系是一种计算技巧，基于这样一个等式：</p>
 <blockquote>
@@ -411,8 +412,28 @@ x\cdot p(x)
 </ul>
 <p>仍然计算{a6}$\cdot${59}，过程如下：<br>$\because$ {59} 由 {40}&oplus;{10}&oplus;{08}&oplus;{01} 构成<br>$\therefore$ {a6}$\cdot${59} = {a6}$\cdot$({40}&oplus;{10}&oplus;{08}&oplus;{01})<br>计算所有中间值<br>{a6}$\cdot${01} = {a6}<br>{a6}$\cdot${02} = xtime({a6}) = {57}<br>{a6}$\cdot${04} = xtime({57}) = {ae}<br>{a6}$\cdot${08} = xtime({ae}) = {47}<br>{a6}$\cdot${10} = xtime({47}) = {8e}<br>{a6}$\cdot${20} = xtime({8e}) = {07}<br>{a6}$\cdot${40} = xtime({07}) = {0e}<br>{a6}$\cdot${80} = xtime({0e}) = {1c}<br>带入右式展开<br>{a6}$\cdot${59}<br>= ({a6}$\cdot${40})&oplus;({a6}$\cdot${10})&oplus;({a6}$\cdot${08})&oplus;({a6}$\cdot${01})<br>= {a6}&oplus;{47}&oplus;{8e}&oplus;{0e}<br>= {61}</p>
 <p>在C中，使用移位与异或运算可以很容易地实现。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//多项式在GF256中的运算</span></span><br><span class="line"><span class="keyword">uint8_t</span> GF256_xtime(<span class="keyword">uint8_t</span> x)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> ((x &lt;&lt; <span class="number">1</span>) ^ (((x &gt;&gt; <span class="number">7</span>) &amp; <span class="number">1</span>) * <span class="number">0x1b</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//AES定义的乘X运算</span></span><br><span class="line"><span class="comment">//参数ts代表移多少次位，取值为0-7</span></span><br><span class="line"><span class="keyword">uint8_t</span> aes_xtimes(<span class="keyword">uint8_t</span> x, <span class="keyword">int</span> ts)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">while</span> (ts-- &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        x = GF256_xtime(x);</span><br><span class="line">    &#125;</span><br><span class="line">   </span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//GF(2^8)中的多项式乘法运算</span></span><br><span class="line"><span class="comment">//参数x做“乘X”运算，获取所有中间值</span></span><br><span class="line"><span class="comment">//再与多项式y中系数为1的项做异或</span></span><br><span class="line"><span class="keyword">uint8_t</span> aes_mul(<span class="keyword">uint8_t</span> x, <span class="keyword">uint8_t</span> y)</span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">return</span> ((((y &gt;&gt; <span class="number">0</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">0</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">1</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">1</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">2</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">2</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">3</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">3</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">4</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">4</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">5</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">5</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">6</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">6</span>)) ^</span><br><span class="line">            (((y &gt;&gt; <span class="number">7</span>) &amp; <span class="number">0x01</span>) * aes_xtimes(x, <span class="number">7</span>)) );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h4 id="系数在GF-28-中的多项式"><a href="#系数在GF-28-中的多项式" class="headerlink" title="系数在GF(28)中的多项式"></a>系数在GF(2<sup>8</sup>)中的多项式</h4><p>这一节的标题是&quot;<strong>Polynomials with Coefficients in GF(2<sup>8</sup>)</strong>&quot;，是MixColumns变换的理论基础。需要思考两点：为什么要强调系数的范围？它与之前章节的计算有什么不同？<br>前文中讨论GF(2<sup>8</sup>)计算，将对应项的系数与二进制比特位值划上等号有一个重要的前提条件，那就是多项式的系数做了模2运算。但是算法中有时会将四字节的向量考虑为多项式，即系数在有限域中的四项式，表达如下：<br>a(x) = a<sub>3</sub>x<sup>3</sup>+a<sub>2</sub>x<sup>2</sup>+a<sub>1</sub>x+a<sub>0</sub><br>本节中描述的系数本身就是有限域中的元素，所以系数是字节<em>byte</em>。而之前章节中用多项式表示字节，系数是比特位的值<em>bit</em>，这点需要注意区分。<br>多项式的含义发生了变化，所以需要定义新的加法与乘法运算规则。<br>有限域中的加法仍然是异或运算，只不过将其扩展为字节间的异或。定义另一个多项式b(x)，有：<br>b(x) = b<sub>3</sub>x<sup>3</sup>+b<sub>2</sub>x<sup>2</sup>+b<sub>1</sub>x+b<sub>0</sub><br>加法运算为：<br>c(x) = a(x)+b(x)<br>= (a<sub>3</sub>&oplus;b<sub>3</sub>)x<sup>3</sup>+(a<sub>2</sub>&oplus;b<sub>2</sub>)x<sup>2</sup>+(a<sub>1</sub>&oplus;b<sub>1</sub>)x+(a<sub>0</sub>&oplus;a<sub>0</sub>)<br>乘法则相对复杂，因为现在的系数在GF(2<sup>8</sup>)而不在GF(2)了，需要分为两步。<br>首先将系数全部计算：<br>c(x) = a(x)$\cdot$b(x) 是一个六次多项式：<br>= c<sub>6</sub>x<sup>6</sup>+c<sub>5</sub>x<sup>5</sup>+c<sub>4</sub>x<sup>4</sup>+c<sub>3</sub>x<sup>3</sup>+c<sub>2</sub>x<sup>2</sup>+c<sub>1</sub>x+c<sub>0</sub><br>且易得各系数分别为：<br>c<sub>0</sub> =<br>c<sub>1</sub> =<br>c<sub>2</sub> =<br>c<sub>3</sub> =<br>c<sub>4</sub> =<br>c<sub>5</sub> =<br>c<sub>6</sub> = </p>
-<h3 id="IV-AES"><a href="#IV-AES" class="headerlink" title="IV. AES"></a>IV. AES</h3><p>我们可以找到很多AES总体结构的说明图片，为了让这篇文章显得长一点，也放一张吧<br><img src="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-Flow.png" alt="AES_process"><br>我一直在想，当然这个想法应该是看油管印度街头小吃视频启发的，AES有点像三哥们煮的糊糊，一边处理食材另一边处理酱料，处理好之后倒在一起一通乱搅，然后接着处理2号食材处理2号酱料再一搅，如此循环个10轮就是AES-128了，反正最后端出来没人知道究竟是什么做的。相比之下DES像麻花，左右两段扭在一起炸至金黄酥脆。扯远了扯远了 (*ˉ﹃ˉ) 。<br>在理解AES的时候，可以把上面的结构说明拆成两大部分，分别为加解密过程与密钥策略。在FIPS-197的第五章中，是以5.1加密，5.2密钥扩展，5.3解密的顺序描述。在这里先聊前两个过程。</p>
+<h4 id="系数在GF-28-中的多项式"><a href="#系数在GF-28-中的多项式" class="headerlink" title="系数在GF(28)中的多项式"></a>系数在GF(2<sup>8</sup>)中的多项式</h4><p>这一节的标题是&quot;<strong>Polynomials with Coefficients in GF(2<sup>8</sup>)</strong>&quot;，是MixColumns变换的理论基础。需要思考两点：为什么要强调系数的范围？它与之前章节的计算有什么不同？<br>前文中讨论GF(2<sup>8</sup>)计算，将对应项的系数与二进制比特位值划上等号有一个重要的前提条件，那就是多项式的系数做了模2运算。但是算法中有时会将四字节的向量考虑为多项式，即系数在有限域中的四项式，表达如下：<br>a(x) = a<sub>3</sub>x<sup>3</sup>+a<sub>2</sub>x<sup>2</sup>+a<sub>1</sub>x+a<sub>0</sub><br>本节中描述的系数本身就是有限域GF(2<sup>8</sup>)中的元素，所以系数是字节<em>byte</em>。而之前章节中用多项式表示字节，系数是比特位的值<em>bit</em>，这点需要注意区分。<br>多项式的含义发生了变化，所以需要定义新的加法与乘法运算规则。<br>有限域中的加法仍然是异或运算，只不过将其扩展为字节间的异或。定义另一个多项式b(x)，有：<br>b(x) = b<sub>3</sub>x<sup>3</sup>+b<sub>2</sub>x<sup>2</sup>+b<sub>1</sub>x+b<sub>0</sub><br>加法运算为：<br>c(x) = a(x)+b(x)<br>= (a<sub>3</sub>&oplus;b<sub>3</sub>)x<sup>3</sup>+(a<sub>2</sub>&oplus;b<sub>2</sub>)x<sup>2</sup>+(a<sub>1</sub>&oplus;b<sub>1</sub>)x+(a<sub>0</sub>&oplus;a<sub>0</sub>)<br>乘法则相对复杂，因为现在的系数在GF(2<sup>8</sup>)而不在GF(2)了，需要分为两步。<br>首先将系数全部计算：<br>c(x) = a(x)$\cdot$b(x) 是一个六次多项式：<br>= c<sub>6</sub>x<sup>6</sup>+c<sub>5</sub>x<sup>5</sup>+c<sub>4</sub>x<sup>4</sup>+c<sub>3</sub>x<sup>3</sup>+c<sub>2</sub>x<sup>2</sup>+c<sub>1</sub>x+c<sub>0</sub><br>且易得各系数分别为：<br>c<sub>0</sub> = a<sub>0</sub>$\cdot$b<sub>0</sub><br>c<sub>1</sub> = a<sub>1</sub>$\cdot$b<sub>0</sub>&oplus;a<sub>0</sub>$\cdot$b<sub>1</sub><br>c<sub>2</sub> = a<sub>2</sub>$\cdot$b<sub>0</sub>&oplus;a<sub>1</sub>$\cdot$b<sub>1</sub>&oplus;a<sub>0</sub>$\cdot$b<sub>2</sub><br>c<sub>3</sub> = a<sub>3</sub>$\cdot$b<sub>0</sub>&oplus;a<sub>2</sub>$\cdot$b<sub>1</sub>&oplus;a<sub>1</sub>$\cdot$b<sub>2</sub>&oplus;a<sub>0</sub>$\cdot$b<sub>3</sub><br>c<sub>4</sub> = a<sub>3</sub>$\cdot$b<sub>1</sub>&oplus;a<sub>2</sub>$\cdot$b<sub>2</sub>&oplus;a<sub>1</sub>$\cdot$b<sub>3</sub><br>c<sub>5</sub> = a<sub>3</sub>$\cdot$b<sub>2</sub>&oplus;a<sub>2</sub>$\cdot$b<sub>3</sub><br>c<sub>6</sub> = a<sub>3</sub>$\cdot$b<sub>3</sub><br>不加处理的情况下，六次多项式无法表示四字节向量，所以第二步就是通过模运算降次。<br>在AES中，选择了<strong>x<sup>4</sup>+1</strong>作为模多项式。a(x)&otimes;b(x)的完整计算过程如下：<br><img src="https://ftp.bmp.ovh/imgs/2020/03/f5de9b1d18eb990e.jpg" alt="coeff_in_GF"><br>定义四项式d(x) = d<sub>3</sub>x<sup>3</sup>+d<sub>2</sub>x<sup>2</sup>+d<sub>1</sub>x+d<sub>0</sub><br>根据计算结果，有：<br>d<sub>0</sub> = (a<sub>0</sub>$\cdot$b<sub>0</sub>)&oplus;(a<sub>3</sub>$\cdot$b<sub>1</sub>)&oplus;(a<sub>2</sub>$\cdot$b<sub>2</sub>)&oplus;(a<sub>1</sub>$\cdot$b<sub>3</sub>)<br>d<sub>1</sub> = (a<sub>1</sub>$\cdot$b<sub>0</sub>)&oplus;(a<sub>0</sub>$\cdot$b<sub>1</sub>)&oplus;(a<sub>3</sub>$\cdot$b<sub>2</sub>)&oplus;(a<sub>2</sub>$\cdot$b<sub>3</sub>)<br>d<sub>2</sub> = (a<sub>2</sub>$\cdot$b<sub>0</sub>)&oplus;(a<sub>1</sub>$\cdot$b<sub>1</sub>)&oplus;(a<sub>0</sub>$\cdot$b<sub>2</sub>)&oplus;(a<sub>3</sub>$\cdot$b<sub>3</sub>)<br>d<sub>3</sub> = (a<sub>3</sub>$\cdot$b<sub>0</sub>)&oplus;(a<sub>2</sub>$\cdot$b<sub>1</sub>)&oplus;(a<sub>1</sub>$\cdot$b<sub>2</sub>)&oplus;(a<sub>0</sub>$\cdot$b<sub>3</sub>)<br>以矩阵方式表达为：</p>
+<script type="math/tex; mode=display">
+\begin{matrix}
+    \left[\begin{array}{rr}
+        d_0 \\
+        d_1 \\
+        d_2 \\
+        d_3 
+    \end{array}\right] = 
+    \left[\begin{array}{rr}
+        a_0 & a_3 & a_2 & a_1\\
+        a_1 & a_0 & a_3 & a_2\\
+        a_2 & a_1 & a_0 & a_3\\
+        a_3 & a_2 & a_1 & a_0 
+    \end{array}\right]
+    \left[\begin{array}{rr}
+        b_0 \\
+        b_1 \\
+        b_2 \\
+        b_3  
+    \end{array}\right] 
+\end{matrix}</script><h3 id="IV-AES"><a href="#IV-AES" class="headerlink" title="IV. AES"></a>IV. AES</h3><p>我们可以找到很多AES总体结构的说明图片，为了让这篇文章显得长一点，也放一张吧<br><img src="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-Flow.png" alt="AES_process"><br>我一直在想，当然这个想法应该是看油管印度街头小吃视频启发的，AES有点像三哥们煮的糊糊，一边处理食材另一边处理酱料，处理好之后倒在一起一通乱搅，然后接着处理2号食材处理2号酱料再一搅，如此循环个10轮就是AES-128了，反正最后端出来没人知道究竟是什么做的。相比之下DES像麻花，左右两段扭在一起炸至金黄酥脆。扯远了扯远了 (*ˉ﹃ˉ) 。<br>在理解AES的时候，可以把上面的结构说明拆成两大部分，分别为加解密过程与密钥策略。在FIPS-197的第五章中，是以5.1加密，5.2密钥扩展，5.3解密的顺序描述。在这里先聊前两个过程。</p>
 <h4 id="PART-A-加密过程"><a href="#PART-A-加密过程" class="headerlink" title="PART A 加密过程"></a>PART A 加密过程</h4><p>这个部分就是FIPS-197 5.1 Cipher小节，贴一下课本上这张图，含义是AES一轮加密的过程，反正我第一次看的时候真是WTF的状态。解释一下，把state的4x4形式以一维展开，从左到右为字节0到字节15。把shiftrows画成矩阵的样子做对比，这样就比较好理解了。并且图片的展开方式，比较类似于线性存储在内存中数据的变化过程，抽象数据结构的时候也可以参考此图。</p>
 <p><img src="https://ftp.bmp.ovh/imgs/2020/03/9f746aefafb30598.png" alt="cipher"></p>
 <script type="math/tex; mode=display">
