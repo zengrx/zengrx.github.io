@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Embedded Android Translation," />
+  <meta name="keywords" content="network,VPN,Linux," />
 
 
 
@@ -79,18 +79,28 @@
 
 
 
-<meta name="description" content="前言安卓的发展是现象级的。在极短的时间内，它已成功地成为市场上顶尖的手机平台。明确的说，谷歌的安卓团队使用了开源协议，积极面向市场，设计前沿的接口，这些超凡的组合正在开花结果。不必多说，大量用户的涌现也归功于安卓没有被手机制造商、移动网络运营商、硅谷制造商及应用程序开发人员所忽视。各种标记着“为安卓设计”的产品，“兼容安卓”的应用和“基于安卓”的设备都如雨后春笋般出现。Android&amp;#39;s">
-<meta name="keywords" content="Embedded Android Translation">
+<meta name="description" content="这是一篇旧文章，在远程办公期间写了个操作手册给大家配置虚拟机代理linux主机网络。疯狂加班了半年，最近难得有空，整理到博客里。">
+<meta name="keywords" content="network,VPN,Linux">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Embedded Android -- Preface">
-<meta property="og:url" content="http://yoursite.com/2018/03/18/Embedded-Android-Preface/index.html">
+<meta property="og:title" content="在Linux中使用深信服VPN">
+<meta property="og:url" content="http://yoursite.com/2020/06/25/How-to-use-Sangfor-VPN-in-Linux/index.html">
 <meta property="og:site_name" content="二又三">
-<meta property="og:description" content="前言安卓的发展是现象级的。在极短的时间内，它已成功地成为市场上顶尖的手机平台。明确的说，谷歌的安卓团队使用了开源协议，积极面向市场，设计前沿的接口，这些超凡的组合正在开花结果。不必多说，大量用户的涌现也归功于安卓没有被手机制造商、移动网络运营商、硅谷制造商及应用程序开发人员所忽视。各种标记着“为安卓设计”的产品，“兼容安卓”的应用和“基于安卓”的设备都如雨后春笋般出现。Android&amp;#39;s">
+<meta property="og:description" content="这是一篇旧文章，在远程办公期间写了个操作手册给大家配置虚拟机代理linux主机网络。疯狂加班了半年，最近难得有空，整理到博客里。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-11-10T03:44:37.041Z">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/e47cabed6a627dae.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/fd17fcceec7bb872.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/df594c778a63868b.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/7eea7680f44fc119.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/55cbd04c95a76023.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/4db6922a9e480a2e.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/498cadcf57a0ff98.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/67a4d6003d522662.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/06/f3ffeb322bb22070.png">
+<meta property="og:updated_time" content="2020-07-04T01:44:09.168Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Embedded Android -- Preface">
-<meta name="twitter:description" content="前言安卓的发展是现象级的。在极短的时间内，它已成功地成为市场上顶尖的手机平台。明确的说，谷歌的安卓团队使用了开源协议，积极面向市场，设计前沿的接口，这些超凡的组合正在开花结果。不必多说，大量用户的涌现也归功于安卓没有被手机制造商、移动网络运营商、硅谷制造商及应用程序开发人员所忽视。各种标记着“为安卓设计”的产品，“兼容安卓”的应用和“基于安卓”的设备都如雨后春笋般出现。Android&amp;#39;s">
+<meta name="twitter:title" content="在Linux中使用深信服VPN">
+<meta name="twitter:description" content="这是一篇旧文章，在远程办公期间写了个操作手册给大家配置虚拟机代理linux主机网络。疯狂加班了半年，最近难得有空，整理到博客里。">
+<meta name="twitter:image" content="https://ftp.bmp.ovh/imgs/2020/06/e47cabed6a627dae.png">
 
 
 
@@ -120,13 +130,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/03/18/Embedded-Android-Preface/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/06/25/How-to-use-Sangfor-VPN-in-Linux/"/>
 
 
 
 
 
-  <title>Embedded Android -- Preface | 二又三</title>
+  <title>在Linux中使用深信服VPN | 二又三</title>
   
 
 
@@ -263,7 +273,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/18/Embedded-Android-Preface/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/25/How-to-use-Sangfor-VPN-in-Linux/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Ross Zeng">
@@ -280,7 +290,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Embedded Android -- Preface</h1>
+          <h1 class="post-title" itemprop="name headline">在Linux中使用深信服VPN</h1>
         
 
         <div class="post-meta">
@@ -292,8 +302,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-18T16:38:29+08:00">
-                2018-03-18
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-25T17:31:08+08:00">
+                2020-06-25
               </time>
             
 
@@ -324,7 +334,7 @@
                   <span class="post-meta-item-text">全文字数&#58;</span>
                 
                 <span title="全文字数">
-                  1.3k
+                  1.4k
                 </span>
               
 
@@ -340,7 +350,7 @@
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
                 <span title="阅读时长">
-                  5
+                  4
                 </span>
               
             </div>
@@ -361,12 +371,28 @@
       
 
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>安卓的发展是现象级的。在极短的时间内，它已成功地成为市场上顶尖的手机平台。明确的说，谷歌的安卓团队使用了开源协议，积极面向市场，设计前沿的接口，这些超凡的组合正在开花结果。不必多说，大量用户的涌现也归功于安卓没有被手机制造商、移动网络运营商、硅谷制造商及应用程序开发人员所忽视。各种标记着“为安卓设计”的产品，“兼容安卓”的应用和“基于安卓”的设备都如雨后春笋般出现。<br>Android&#39;s growth is phenomenal. In a very short time-span, it has successded in becoming one of the top mobile platforms in market. Clearly, the unique combination of open source licensing, aggressive go-to-market, and trendy interface is bearing fruit for Google&#39;s Android team. Needless to say, the massive user uptake generated by Android has not gone unnoticed for handset manufacturers, mobile network operators, silicon manufacturers, and app developers. Products, app and devices &quot;for&quot;, &quot;compatible with&quot;, or &quot;based on&quot; Android seem to be coming out ever so fast.</p>
+        <p>这是一篇旧文章，在远程办公期间写了个操作手册给大家配置虚拟机代理linux主机网络。疯狂加班了半年，最近难得有空，整理到博客里。</p>
 <a id="more"></a>
-<p>然而，除了移动设备端的成功之外，安卓也出乎意料地吸引了另一群人的注意——嵌入式开发人员。大量的嵌入式设备几乎没有使用界面，传统上认为，大部分的嵌入式设备是具备用户界面的，对于很多现代机器而言，出去单纯的技术性功能外，开发人员设计面向用户设备时必须要考虑到人机交互因素。因此，设计者们必须在以下情况中做出选择：为用户提供他们已熟悉的体验；或冒险改变用户的习惯，要求用户学习鲜有接触的或全新的操作逻辑。在安卓诞生之前，可供开发人员在此类设备上选择的用户界面十分有限<br>Beyond its mobile success, however, Android is also attracting the attention of yet another, unintended crowd: embedded systems developers. While a large number of embedded devices have little to no human interface, a substantial number of devices which would traditionally be considered &quot;embedded&quot; do have user interface. For a goodly number of modern machines, in addition to pure rechnical functionality, developers creating user-facing devices must also contend with human-computer interaction factors. Therefore, designers must either present users with an experence they are already familiar with or risk alienationg users by requiring them to learn a lesser known or entirely new user experience. Before Android, the user interface choices available to the developers of such devices were fairly limited and limiting.</p>
-<p>很显然，嵌入式开发人员更倾向于为用户提供他们早已熟悉的操作界面，虽然这些界面过去很可能是基于视窗。因此，很多嵌入式设备都基于典型的窗口中心，台式机设计或台式机风格的界面。而苹果的IOS和谷歌的安卓系统已经引导用户使用基于点触的图形界面。这改变了用户的规范与期望，结合安卓的开源协议，嵌入式世界已经卷起了安卓浪潮。<br>Clearly, embedded developers prefer offering user an interface they are already familiar with. Although that interface might have been window-based in the  past -- and hance a lot of embedded devices were based on classic window-centric, desktop-like or desktop-based interfaces --  Apple&#39;s IOS and Google&#39;s Android have forever democratized the use of touch-base iPhone-like graphical interfaces. This shift in user paradgims and expectations, combined with Android&#39;s open source licensing, have created a ground-swell of interest for Android within the embedded world.</p>
-<p>不同于安卓应用开发人员，希望在任何平台使用安卓系统的开发者，在移植或适配安卓系统到嵌入式设备时，很快就会遇到一个严重的问题：几乎没有任何文档指示他们如何动手。所以，当应用开发人员欢乐地参考谷歌提供的在线文档，或是阅读O&#39;Reilly的<em>Learning Android</em>等书籍时，嵌入式开发者只能在 <a href="http://source.android.com" target="_blank" rel="noopener">http://source.android.com</a> 中寻找一些零星的资料。对于从阅读安卓源码为开端的嵌入式工作者而言，他们使用安卓系统的乐趣被大大减少。<br>Unlike Android app developers, however, developers wanting to do any sort of platform work in Android, including porting or adapting Android to an embedded device, rapidly run into quite a significant problem: the almost total lack of documentation on how to do that. So, while Google provides app developers with a considerable amount of online documentation and while there are a number of books on the topic, such as O&#39;Reilly&#39;s <em>Learning Android</em>, embedded developers have to contend with the minimalistic set of documents provided by Google at <a href="http://source.android.com" target="_blank" rel="noopener">http://source.android.com</a>. Embedded developers seriously entertaining the use of Android in their system were essentially reduced to starting with Android&#39;s source code.</p>
-<p>出版这本书的目的巴拉巴拉巴拉<br>The purpose of this book is to remedy to that situation and enable you to embed Android in any device. You will therefore learn about Android&#39;s architecture, how to navigate its source code, how ot modify its various components, and how to create your own version for your particular device. In addition, you will learn how Android integrates into the Linux krenel and how to leverage Android&#39;s Linux heritage. For instance, we will discuss how to take &quot;classic&quot; Linux components such as glibc and BusyBox and package them as part of Android. Along the way, you will learn day-to-day tips and tricks, such as how to use Android&#39;s repo tool and integrate with or modify Android&#39;s build system.</p>
+<p>公司用了深信服的easyconnect在公网代理专用网络，win和mac用起来基本无压力，但是对用linux做主力机的用户也太不友好了，尝试了几条路，浏览器跑java applet，这个属实不靠谱，都21世纪了，害跑个锤子java虚拟机，支持java的浏览器都难找（flash下一个死的就是你啦），还要降jdk版本，搞乱了安卓源码编译环境那就得不偿失了。后来又找到了一个deb包，但是装上去提示服务器版本不匹配，并不能用。或许深信服觉得linux客户端是个鸡肋，与其花大力气开发维护，做得不好被diss技术水平，做好了被疯狂逆向挖漏洞，不如让linuxer自己折腾呢，反正最终他们都能搞定。╮(╯-╰)╭确实是这样的嗷。</p>
+<p>问了组里的几个同事，大部分图省事直接在win虚拟机里给个共享目录到主机，还有做了端口转发，和我想要的完整内网环境都不太搭。因为网线需要留着telnet调板子，计划从WLAN爬到内网，毕竟七七八八的服务器不知道啥时候就得用。那么网络拓扑（伪）大致是这样的：<br><img src="https://ftp.bmp.ovh/imgs/2020/06/e47cabed6a627dae.png" alt="network topographic map"></p>
+<p>我的环境是Ubuntu 16.04 Host + Win 7 VM，基本策略为主机与虚拟机走桥接，虚拟机中用来共享网络的网卡设置为Host-only模式，从而将主机与虚拟机中的VPN网络打通。</p>
+<p>首先确认windows虚拟机能够通过VPN访问到内网，这个无需多说。可以在网络管理中看到多出了一个网络连接，重命名为SangforVPN。确认完毕后虚拟机关机，接下来在virtualbox中对虚拟机网络进行配置，<strong>网卡1</strong>以<strong>桥接网卡</strong>的方式连接，我是打算用wifi的，所以选择wlp5s0，这里根据自己的需求和ifconfig去设置就可以了。</p>
+<p><center>配置桥接网卡</center><img src="https://ftp.bmp.ovh/imgs/2020/06/fd17fcceec7bb872.png" alt="bridge config"></p>
+<p>接下来在virtualbox应用设置中选择<strong>管理</strong>，点击<strong>全局设定</strong>，选择<strong>网络</strong>栏，在<strong>仅主机(Host-Only)网络</strong>页中添加vboxnet0网络，并做下图的配置：<br><img src="https://ftp.bmp.ovh/imgs/2020/06/df594c778a63868b.png" alt="vboxnet0 config"></p>
+<p>在<strong>仅主机网络明细配置</strong>窗口的<strong>主机虚拟网络界面页</strong>中将默认的IPv4地址修改为192.168.137.xxx。因为windows系统网络共享自身策略的原因，共享网络后，Host-Only网卡IP会自动变为192.168.137.1，在这里提前设置方便后续操作。剩下的DHCP我随手配了一下，不配置应该也没啥问题。参考配置如下：<br><img src="https://ftp.bmp.ovh/imgs/2020/06/7eea7680f44fc119.png" alt="vboxnet0 DHCP config"></p>
+<p>配置完成后，可以从linux主机的ifconfig中看到刚才添加的vboxnet0已经起来了。这个vboxnet0应该是跟着virtualbox的，开机默认没有up，配置好后每次打开virtualbox就会起来。</p>
+<p>重新回到virtualbox的网络设置，在<strong>网卡2</strong>页中选择<strong>仅主机网络</strong>，经过了之前的配置，可以选择vboxnet0作为虚拟机中Host-Only的interface。具体配置如下图：<br><img src="https://ftp.bmp.ovh/imgs/2020/06/55cbd04c95a76023.png" alt="vbox hostonly config"></p>
+<p>virtualbox相关的网络配置添加完成，开机进入windows虚拟机。在网络和共享设置中更改适配器设置，可以看到网络连接中新增了两个网络连接（我这里是网络连接1和网络连接2）。对应重命名为bridge和host-only。右键将SangforVPN的网络共享给Host-Osnly网络，注意需要关闭windows防火墙，否则测试时无法被主机ping通。<br><img src="https://ftp.bmp.ovh/imgs/2020/06/4db6922a9e480a2e.png" alt="win net config"></p>
+<p>之前有提到，共享网络后，Host-Only的IP就自动变为了192.168.137.1。此时linux主机与win虚拟机的bridge与Host-Only可以互ping通，分别对应了主机的无线网络wlp5s0与虚拟机的仅主机虚拟网络vboxnet0。胜利就在眼前。</p>
+<p>Linux中输入route -n查看路由表，因为没有接网线，所以只会看到无线路由器网关这类的网络信息，对应内网IP的网关不配置的话，所有去内网的报文就无法被转发到下一跳。所以接下来需要配置路由表。<br>修改路由表，执行如下命令让192.168.137.1做网关转发去到内网的报文：</p>
+<blockquote>
+<p>sudo ip r add 192.xxx.xxx.xxx via 192.168.137.1</p>
+</blockquote>
+<p><img src="https://ftp.bmp.ovh/imgs/2020/06/498cadcf57a0ff98.png" alt="route setting"></p>
+<p>我把内网IP和我自己的wifi网关涂掉了，可以看到倒数第二行Host-Only的IP被作为了网关，配置时根据自己设备的实际内容填写即可。因为指定了具体的ip地址，所以子网掩码是8个F。添加网关后，所有数据包都可以准确找到下一跳目标。</p>
+<p>该路由表设置不会保存，每次重新开机后打开virtualbox让vboxnet0起来，再执行一次ip r add命令即可。这里只做了一个内网IP的转发，需要访问更多IP地址也可以继续设置。</p>
+<p>Linux主机可以顺利ssh<br><img src="https://ftp.bmp.ovh/imgs/2020/06/67a4d6003d522662.png" alt="ssh success"><br><img src="https://ftp.bmp.ovh/imgs/2020/06/f3ffeb322bb22070.png" alt="sshfs success"></p>
+<h4 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h4><p>参考了一篇博客，也是在gitpage上，不过忘了保存一时半会儿找不到地址了。这哥们有点意思，win主机在linux虚拟机上写代码，非常抗拒在主机上装深信服软件，于是开了个win虚拟机装vpn把网络共享给linux虚拟机🐂🍺</p>
 
       
     </div>
@@ -384,7 +410,11 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Embedded-Android-Translation/" rel="tag"># Embedded Android Translation</a>
+            <a href="/tags/network/" rel="tag"># network</a>
+          
+            <a href="/tags/VPN/" rel="tag"># VPN</a>
+          
+            <a href="/tags/Linux/" rel="tag"># Linux</a>
           
         </div>
       
@@ -397,8 +427,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/03/03/android-OTA-update.zip-analysis/" rel="next" title="android OTA 升级包校验分析">
-                <i class="fa fa-chevron-left"></i> android OTA 升级包校验分析
+              <a href="/2020/02/23/Pz-Kpfw-IV-Ausf-J-late-production-scale-model/" rel="next" title="麦田4号坦克J后期型模型制作 [多图]">
+                <i class="fa fa-chevron-left"></i> 麦田4号坦克J后期型模型制作 [多图]
               </a>
             
           </div>
@@ -406,10 +436,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/03/18/Embedded-Android-Chapter1/" rel="prev" title="Embedded Android -- Chapter1">
-                Embedded Android -- Chapter1 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -578,7 +604,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x524D;&#x8A00;" class="headerlink" title="&#x524D;&#x8A00;"></a>&#x524D;&#x8A00;</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference"><span class="nav-number">1.</span> <span class="nav-text"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</span></a></li></ol></div>
             
 
           </div>
