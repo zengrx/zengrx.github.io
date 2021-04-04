@@ -439,67 +439,55 @@ void aes_add_round_key(AES_CYPHER_T mode, uint8_t *state, uint8_t *round, int nr
 
 最终，完整的加密过程实现如下：
 ```C
-int aes_encrypt(AES_CYPHER_T mode, uint8_t *data, int len, uint8_t *key)
+int aes_encrypt(AES_CYPHER_T mode, uint8_t *data, uint8_t *key)
 {
     uint8_t w[4 * 4 * 15] = {0}; /* round key */
-    uint8_t s[4 * 4] = {0}; /* state */
-   
-    int nr, i, j;
-   
+    uint8_t s[4 * 4] = {0};      /* state */
+
+    int nr;
+
     /* key expansion */
     aes_key_expansion(mode, key, w);
-   
-    /* start data cypher loop over input buffer */
-    for (i = 0; i < len; i += 4 * g_aes_nb[mode])
+
+    /* init state from user buffer (plaintext) */
+    memcpy(s, data, 4 * g_aes_nb[mode]);
+
+    /* start AES cypher loop over all AES rounds */
+    for (nr = 0; nr <= g_aes_rounds[mode]; nr++)
     {
-        printf("Encrypting block at %u ...\n", i);
+        printf(" [Round %d]\n", nr);
+        aes_dump("input", s, 4 * g_aes_nb[mode]);
 
-        /* init state from user buffer (plaintext) */
-        for (j = 0; j < 4 * g_aes_nb[mode]; j++)
+        if (nr > 0)
         {
-            s[j] = data[i + j];
-        }
-        
-        /* start AES cypher loop over all AES rounds */
-        for (nr = 0; nr <= g_aes_rounds[mode]; nr++)
-        {
-            printf(" [Round %d]\n", nr);
-            aes_dump("input", s, 4 * g_aes_nb[mode]);
-            
-            if (nr > 0)
-            {   
-                /* do SubBytes */
-                aes_sub_bytes(mode, s);
-                aes_dump("SubBytes", s, 4 * g_aes_nb[mode]);
-                
-                /* do ShiftRows */
-                aes_shift_rows(mode, s);
-                aes_dump("ShiftRows", s, 4 * g_aes_nb[mode]);
-                
-                if (nr < g_aes_rounds[mode])
-                {
-                    /* do MixColumns */
-                    aes_mix_columns(mode, s);
-                    aes_dump("MixColumns", s, 4 * g_aes_nb[mode]);
-                }
+            /* do SubBytes */
+            aes_sub_bytes(mode, s);
+            aes_dump("SubBytes", s, 4 * g_aes_nb[mode]);
+
+            /* do ShiftRows */
+            aes_shift_rows(mode, s);
+            aes_dump("ShiftRows", s, 4 * g_aes_nb[mode]);
+
+            if (nr < g_aes_rounds[mode])
+            {
+                /* do MixColumns */
+                aes_mix_columns(mode, s);
+                aes_dump("MixColumns", s, 4 * g_aes_nb[mode]);
             }
-           
-            /* do AddRoundKey */
-            aes_add_round_key(mode, s, w, nr);
-            aes_dump("RoundKey", &w[nr * 4 * g_aes_nb[mode]], 4 * g_aes_nb[mode]);
-            aes_dump("state", s, 4 * g_aes_nb[mode]);
-        }
-       
-        /* save state (cypher) to user buffer */
-        for (j = 0; j < 4 * g_aes_nb[mode]; j++)
-        {
-            data[i + j] = s[j];
         }
 
-        printf("Output:\n");
-        aes_dump("cypher", &data[i], 4 * g_aes_nb[mode]);
+        /* do AddRoundKey */
+        aes_add_round_key(mode, s, w, nr);
+        aes_dump("RoundKey", &w[nr * 4 * g_aes_nb[mode]], 4 * g_aes_nb[mode]);
+        aes_dump("state", s, 4 * g_aes_nb[mode]);
     }
-   
+
+    /* save state (cypher) to user buffer */
+    memcpy(data, s, 4 * g_aes_nb[mode]);
+
+    printf("Output:\n");
+    aes_dump("cypher", data, 4 * g_aes_nb[mode]);
+
     return 0;
 }
 ```
@@ -613,7 +601,299 @@ void aes_key_expansion(AES_CYPHER_T mode, uint8_t *key, uint8_t *round)
 }
 ```
 
-以AES-128为例，输入的4个字（16字节）将被扩展为44个字（176字节）的一维线性数组。如果将加密过程看作主菜，那么密钥扩展就像是酱料的调配，是一个相对独立的过程。事实上我在实现AES时也正是这样做的，在github的commit中可以看到，第一阶段先完成了所有的轮密钥生成。轮密钥log如下：
+以AES-128为例，输入的4个字（16字节）将被扩展为44个字（176字节）的一维线性数组。如果将加密过程看作主菜，那么密钥扩展就像是酱料的调配，是一个相对独立的过程。事实上我在实现AES时也正是这样做的，在github的commit中可以看到，第一阶段先完成了所有的轮密钥生成。
+轮密钥log详见附录A。
+
+#### 解密过程
+不同于使用[Feistel](https://zengrx.github.io/2019/05/13/Feistel-cryptography-architecture/)结构的DES，AES中的解密需要实现加密的逆变换。
+这一节在FIPS-197中的描述比较简单，而教材是以轮函数为视角，在各小节中统一介绍正向与逆向变换。总之，InvShiftRows是循环右移1、2、3字节，InvSubBytes找逆S盒，InvMixColumns用a(x)的乘法逆元，AddRoundKey做异或所以逆为自身。实现时参考FIPS-197第21页图12的伪代码，解密过程的轮函数调用顺序为:
+InvShiftRows->InvSubBytes->AddRoundKey->InvMixColumns
+这是很有趣的一个地方，可以与15页图5加密过程的伪代码对比体会。在本文的第六章节还会深入讨论逆运算的等价过程。这里先贴上根据图12实现的解密部分代码：
+
+```C
+int aes_decrypt(AES_CYPHER_T mode, uint8_t *data, uint8_t *key)
+{
+    uint8_t w[4 * 4 * 15] = {0}; /* round key */
+    uint8_t s[4 * 4] = {0};      /* state */
+
+    int nr;
+
+    /* key expansion */
+    aes_key_expansion(mode, key, w);
+
+    memcpy(s, data, 4 * g_aes_nb[mode]);
+
+    for (nr = g_aes_rounds[mode]; nr >= 0; nr--)
+    {
+        printf(" [Round %d]\n", g_aes_rounds[mode] - nr);
+        aes_dump("input", s, 4 * g_aes_nb[mode]);
+
+        if (nr < g_aes_rounds[mode])
+        {
+            inv_shift_rows(mode, s);
+            aes_dump("invShiftRows", s, 4 * g_aes_nb[mode]);
+
+            inv_sub_bytes(mode, s);
+            aes_dump("invSubBytes", s, 4 * g_aes_nb[mode]);
+        }
+
+        aes_add_round_key(mode, s, w, nr);
+        aes_dump("RoundKey", &w[nr * 4 * g_aes_nb[mode]], 4 * g_aes_nb[mode]);
+        aes_dump("state", s, 4 * g_aes_nb[mode]);
+
+        if (nr < g_aes_rounds[mode] && nr > 0)
+        {
+            inv_mix_columns(mode, s);
+            aes_dump("invMixColumns", s, 4 * g_aes_nb[mode]);
+        }
+    }
+
+    /* save state (cypher) to user buffer */
+    memcpy(data, s, 4 * g_aes_nb[mode]);
+    printf("Output:\n");
+    aes_dump("plain", data, 4 * g_aes_nb[mode]);
+
+    return 0;
+}
+
+```
+
+### V. 输出实例
+这一章单独贴加解密打印，包含了每一轮的输入、变换后结果与输出，可以和rijndaelanimation对比验证。
+内容详见附录B
+
+### VI. 还有一些问题
+
+#### 1. 轮函数调用的探讨
+在matt_wu给出的源码中，解密部分即Inverse Cipher，函数实现如下：
+```C
+/* start AES cypher loop over all AES rounds */
+for (nr = g_aes_rounds[mode]; nr >= 0; nr--) {
+    /* do AddRoundKey */
+    aes_add_round_key(mode, s, w, nr);
+
+    if (nr > 0) {
+        if (nr < g_aes_rounds[mode]) {
+            /* do MixColumns */
+            inv_mix_columns(mode, s);
+        }
+
+        /* do ShiftRows */
+        inv_shift_rows(mode, s);
+
+        /* do SubBytes */
+        inv_sub_bytes(mode, s);
+    }
+}
+```
+实际上其轮函数的调用过程为，先做了一轮 AddRoundKey, invShiftRows, invSubBytes，再按照 addRoundKey, invMixColumns, invshiftRows, invSubBytes 的顺序做剩下的 nr-1 轮，最后做一个AddRoundKey。
+起初我也没有察觉到有什么异样，在验证的过程中发现加解密每轮的输出不能相互印证，仔细一看觉得这里有点怪。
+
+我按照文档实现的代码为：
+```C
+for (nr = g_aes_rounds[mode]; nr >= 0; nr--)
+{
+    if (nr < g_aes_rounds[mode])
+    {
+        inv_shift_rows(mode, s);
+        inv_sub_bytes(mode, s);
+    }
+            
+    aes_add_round_key(mode, s, w, nr);
+
+    if (nr < g_aes_rounds[mode] && nr > 0)
+    {
+        inv_mix_columns(mode, s);
+    }
+}
+```
+
+//加解密的轮是否需要相呼应？
+
+~~是否需要满足加解密过程中，相应的轮函数执行完毕，此时内存中的state恰好可以互为输入输出？
+如上节log中解密第八轮做invMixColumns输出的state为：
+invMixColumns:
+        49 45 7f 77
+        db 39 02 de
+        87 53 d2 96
+        3b 89 f1 1a
+应该要对应解密第二轮中MixColumns操作的输入，即ShiftRows的输出：
+ShiftRows:
+        49 45 7f 77
+        db 39 02 de
+        87 53 d2 96
+        3b 89 f1 1a
+~~
+
+当然，把所有过程展开来看，我们的两份代码对输入明文内容所作操作是完全相同的。区别在于选择的头尾不同，所以对中间的循环体处理自然就不一致了。那么本质上，state经历的每个变换过程是一致的。
+
+#### 2. 等价逆运算
+根据前文的描述，虽然加解密过程在结构上大体相似，但实际轮函数变换顺序是不一样的。这就造成了加密和解密需要准备不同的软件、固件模块或是硬件电路，对于同时需要实现加解密的应用而言，这个差异增加了落地成本。为了解决这个问题，AES提供了等价的逆算法。
+从Fig 5.和Fig 12.可以看出，标准加解密过程的轮结构分别为:
+SubBytes->ShiftRows->Mixcolumns->AddroundKey
+invShiftRows->invSubBytes->AddRoundKey->invMixColumns
+因此，解密轮的前后两个过程都需要调换。
+先来看invShiftRows和invSubBytes，逆行移位和逆字节替代是可以直接交换的,因为行移位改变state中的字节顺序，而字节替代使用S盒替换state中的字节内容。就像先砌墙再刷漆和先刷漆再砌墙一样（当然是在无敌的理想环境），工序的先后不会影响墙壁最终呈现出的色彩和图案。*The SubBytes() and ShiftRows() transformations commute. The same is true for their inverses.*
+AddRoundKey和invMixColumns稍微复杂一些。轮密钥加和逆列混淆都不会改变state中的字节顺序，且它们都是以字为输入单位(computed as a one-dimensional array of word.)，每次都对state中的一列进行操作。即两个操作对列的输入是线性相关。如此一来，就可以得到以下等式：
+invMixColumns(state &oplus; Roundkey) = invMixColumns(state) &oplus; invMixColumns(Roundkey) 
+设state第一列为[y<sub>0</sub>, y<sub>1</sub>, y<sub>2</sub>, y<sub>3</sub>]，该轮轮密钥第一列为[k<sub>0</sub>, k<sub>1</sub>, k<sub>2</sub>, k<sub>3</sub>]。则矩阵表达为：
+$$
+\begin{matrix}
+    \left[\begin{array}{rr}
+        0E & 0B & 0D & 09\\
+        09 & 0E & 0B & 0D\\
+        0D & 09 & 0E & 0B\\
+        0B & 0D & 09 & 0E
+    \end{array}\right]
+    \left[\begin{array}{rr}
+        y_0 \oplus k_0 \\
+        y_1 \oplus k_1 \\
+        y_2 \oplus k_2 \\
+        y_3 \oplus k_3  
+    \end{array}\right]
+    =
+    \left[\begin{array}{rr}
+        0E & 0B & 0D & 09\\
+        09 & 0E & 0B & 0D\\
+        0D & 09 & 0E & 0B\\
+        0B & 0D & 09 & 0E 
+    \end{array}\right]
+    \left[\begin{array}{rr}
+        y_0 \\
+        y_1 \\
+        y_2 \\
+        y_3  
+    \end{array}\right]
+        \oplus
+    \left[\begin{array}{rr}
+        0E & 0B & 0D & 09\\
+        09 & 0E & 0B & 0D\\
+        0D & 09 & 0E & 0B\\
+        0B & 0D & 09 & 0E 
+    \end{array}\right]
+    \left[\begin{array}{rr}
+        k_0 \\
+        k_1 \\
+        k_2 \\
+        k_3  
+    \end{array}\right]
+\end{matrix}
+$$
+
+那么基于这个等式，就可以通过预先对轮密钥生成加入逆列混淆操作，使用转换后的轮密钥代入轮函数运算，从而达到交换AddRoundKey与invMixColumns调用顺序的目的。实际各轮应用如课本图5.10：
+![equ_inv_cipher](https://ftp.bmp.ovh/imgs/2020/05/3c10e952adaa3ea0.jpg)
+
+Equivalent Inverse Cipher 实现代码如下
+```C
+/**
+ * 5.3.5 Equivalent Inverse Cipher
+ * Fig.15 For the Equivalent function, key expansion should add pre-invMixColumns.
+ * new para@inv: crypto flag, type-uint8_t, 0-encrypt 1-decrypt
+ */
+void equ_key_expansion(AES_CYPHER_T mode, uint8_t *key, uint8_t *round, uint8_t inv)
+{
+    uint32_t *w = (uint32_t *)round;
+    uint32_t  t;
+    int      i = 0;
+
+    //密钥扩展部分是相同的
+    printf("Key Expansion:\n");   
+    do {
+        //KeyExpansion code
+    } while (++i < g_aes_nb[mode] * (g_aes_rounds[mode] + 1));
+
+    //Fig.15 implement equivalent inverse cipher
+    //此处注意转换数据类型
+    //invMixColumns传入的是byte 8 bits，而KeyExpansion传入word为32 bits
+    if (1 == inv)
+    {
+        uint8_t *inv_k = (uint8_t *)w;
+        uint8_t tmp_roundkey[4 * 4 * 15] = {0};
+        for (i = 1; i < g_aes_rounds[mode]; i++)
+        {
+            memcpy(&tmp_roundkey[(i - 1) * 16], &inv_k[i * 16], 16);
+            inv_mix_columns(mode, &tmp_roundkey[(i - 1) * 16]);
+        }
+
+        //通过w的地址传给round，第一轮和最后一轮的密钥保持不变
+        memcpy(w + 4, tmp_roundkey, 4 * 4 * (g_aes_rounds[mode] - 1));
+    }
+}
+
+//解密就可以用与加密相同的顺序调用
+/**
+ * section 5.3.5
+ * Equivalent Inverse Cipher
+ * switch functions call order to get a efficient struct
+ */
+int aes_equ_decrypt(AES_CYPHER_T mode, uint8_t *data, uint8_t *key)
+{
+    uint8_t w[4 * 4 * 15] = {0}; /* round key */
+    uint8_t s[4 * 4] = {0};      /* state */
+
+    int nr;
+
+    /* key expansion for equ-inverse algorithm*/
+    equ_key_expansion(mode, key, w, 1);
+
+    memcpy(s, data, 4 * g_aes_nb[mode]);
+
+    /* start AES cypher loop over all AES rounds */
+    for (nr = g_aes_rounds[mode]; nr >= 0; nr--)
+    {
+        printf(" [Round %d]\n", g_aes_rounds[mode] - nr);
+        aes_dump("input", s, 4 * g_aes_nb[mode]);
+
+        if (nr < g_aes_rounds[mode])
+        {
+            inv_sub_bytes(mode, s);
+            aes_dump("invSubBytes", s, 4 * g_aes_nb[mode]);
+
+            inv_shift_rows(mode, s);
+            aes_dump("invShiftRows", s, 4 * g_aes_nb[mode]);
+
+            if (nr > 0)
+            {
+                inv_mix_columns(mode, s);
+                aes_dump("invMixColumns", s, 4 * g_aes_nb[mode]);
+            }
+        }
+
+        /* do AddRoundKey */
+        aes_add_round_key(mode, s, w, nr);
+        aes_dump("RoundKey", &w[nr * 4 * g_aes_nb[mode]], 4 * g_aes_nb[mode]);
+        aes_dump("state", s, 4 * g_aes_nb[mode]);
+    }
+
+    /* save state (cypher) to user buffer */
+    memcpy(data, s, 4 * g_aes_nb[mode]);
+
+    printf("Output:\n");
+    aes_dump("plain", data, 4 * g_aes_nb[mode]);
+
+    return 0;
+}
+```
+
+#### 3. New Flag
+接下来应该会开分组密码的工作模式这个坑，如果填完就继续开公钥密码学的坑吧(ˉ﹃ˉ)
+
+### VII. 参考文献
+1. [AES标准及Rijndael算法解析](http://blog.dynox.cn/?p=1562)
+2. [FIPS-197](http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf)
+3. [Rijndael_Animation_v4_eng](https://formaestudio.com/rijndaelinspector/archivos/rijndaelanimation.html)
+4. [有限域GF(2^8)的四则运算及拉格朗日插值](https://blog.csdn.net/luotuo44/article/details/41645597)
+5. [AES中S盒的生成原理与变化](https://bbs.pediy.com/thread-253916.htm)
+6. [手动推导计算AES中的s盒的输出](https://blog.csdn.net/u011241780/article/details/80589273)
+7. [How are the AES S-Boxes calculated](https://crypto.stackexchange.com/questions/10996/how-are-the-aes-s-boxes-calculated)
+8. [polynomial in AES MixColumns](https://crypto.stackexchange.com/questions/15850/why-is-the-polynomial-in-aes-mixcolumns-multiplied-modulo-a-reducible-polynomial)
+9. [Figure Guide AES](http://www.moserware.com/2009/09/stick-figure-guide-to-advanced.html)
+10. [The Advanced Encryption Standard: Rijndael](https://math.boisestate.edu/~liljanab/Rijndael-version2.pdf)
+
+### VIII. 附录
+
+#### APPENDIX A
+轮密钥扩展过程。
 ```s 
 Key Expansion:
     00:  rst: 2b7e1516
@@ -662,73 +942,7 @@ Key Expansion:
     43:  equ: e13f0cc8 rst: b6630ca6
 ```
 
-#### 解密过程
-不同于使用[Feistel](https://zengrx.github.io/2019/05/13/Feistel-cryptography-architecture/)结构的DES，AES中的解密需要实现加密的逆变换。
-这一节在FIPS-197中的描述比较简单，而教材是以轮函数为视角，在各小节中统一介绍正向与逆向变换。总之，InvShiftRows是循环右移1、2、3字节，InvSubBytes找逆S盒，InvMixColumns用a(x)的乘法逆元，AddRoundKey做异或所以逆为自身。实现时参考FIPS-197第21页图12的伪代码，解密过程的轮函数调用顺序为:
-InvShiftRows->InvSubBytes->AddRoundKey->InvMixColumns
-这是很有趣的一个地方，可以与15页图5加密过程的伪代码对比体会。在本文的第六章节还会深入讨论逆运算的等价过程。这里先贴上根据图12实现的解密部分代码：
-
-```C
-int aes_decrypt(AES_CYPHER_T mode, uint8_t *data, int len, uint8_t *key)
-{
-    uint8_t w[4 * 4 * 15] = {0}; /* round key */
-    uint8_t s[4 * 4] = {0}; /* state */
-   
-    int nr, i, j;
-
-    /* key expansion */
-    aes_key_expansion(mode, key, w);
-
-    for (i = 0; i < len; i += 4 * g_aes_nb[mode])
-    {
-        printf("Decrypting block at %u...\n", i);
-
-        for (j = 0; j < 4 * g_aes_nb[mode]; j++)
-        {
-            s[j] = data[i + j];
-        }
-
-        for (nr = g_aes_rounds[mode]; nr >= 0; nr--)
-        {
-            printf(" [Round %d]\n", g_aes_rounds[mode] - nr);
-            aes_dump("input", s, 4 * g_aes_nb[mode]);
-
-            if (nr < g_aes_rounds[mode])
-            {
-                inv_shift_rows(mode, s);
-                aes_dump("invShiftRows", s, 4 * g_aes_nb[mode]);
-
-                inv_sub_bytes(mode, s);
-                aes_dump("invSubBytes", s, 4 * g_aes_nb[mode]);
-            }
-            
-            aes_add_round_key(mode, s, w, nr);
-            aes_dump("RoundKey", &w[nr * 4 * g_aes_nb[mode]], 4 * g_aes_nb[mode]);
-            aes_dump("state", s, 4 * g_aes_nb[mode]);
-
-            if (nr < g_aes_rounds[mode] && nr > 0)
-            {
-                inv_mix_columns(mode, s);
-                aes_dump("invMixColumns", s, 4 * g_aes_nb[mode]);
-            }
-        }
-
-        /* save state (cypher) to user buffer */
-        for (j = 0; j < 4 * g_aes_nb[mode]; j++)
-        {
-            data[i + j] = s[j];
-        }
-        printf("Output:\n");
-        aes_dump("plain", &data[i], 4 * g_aes_nb[mode]);
-    }
-
-    return 0;
-}
-
-```
-
-### V. 输出实例
-这一章单独贴加解密打印，包含了每一轮的输入、变换后结果与输出，可以和rijndaelanimation对比验证。
+#### APPENDIX B
 输出内容根据FIPS-197中Figure 5. Pseudo Code for the Cipher 与Figure 12. Pseudo Code for the Inverse Cipher描述的加解密函数实现得来，展示了经过各变换后内存中state的结果。
 
 ```s
@@ -1063,7 +1277,6 @@ Output:
         1d fb 97 32
 ```
 
-
 ```s
 解密
 Decrypting block at 0...
@@ -1395,227 +1608,3 @@ Output:
         f6 30 98 07
         a8 8d a2 34
 ```
-
-
-### VI. 还有一些问题
-
-#### 1. 轮函数调用的探讨
-在matt_wu给出的源码中，解密部分即Inverse Cipher，函数实现如下：
-```C
-/* start AES cypher loop over all AES rounds */
-for (nr = g_aes_rounds[mode]; nr >= 0; nr--) {
-    /* do AddRoundKey */
-    aes_add_round_key(mode, s, w, nr);
-
-    if (nr > 0) {
-        if (nr < g_aes_rounds[mode]) {
-            /* do MixColumns */
-            inv_mix_columns(mode, s);
-        }
-
-        /* do ShiftRows */
-        inv_shift_rows(mode, s);
-
-        /* do SubBytes */
-        inv_sub_bytes(mode, s);
-    }
-}
-```
-实际上其轮函数的调用过程为，先做了一轮 AddRoundKey, invShiftRows, invSubBytes，再按照 addRoundKey, invMixColumns, invshiftRows, invSubBytes 的顺序做剩下的 nr-1 轮，最后做一个AddRoundKey。
-起初我也没有察觉到有什么异样，在验证的过程中发现加解密每轮的输出不能相互印证，仔细一看觉得这里有点怪。
-
-我按照文档实现的代码为：
-```C
-for (nr = g_aes_rounds[mode]; nr >= 0; nr--)
-{
-    if (nr < g_aes_rounds[mode])
-    {
-        inv_shift_rows(mode, s);
-        inv_sub_bytes(mode, s);
-    }
-            
-    aes_add_round_key(mode, s, w, nr);
-
-    if (nr < g_aes_rounds[mode] && nr > 0)
-    {
-        inv_mix_columns(mode, s);
-    }
-}
-```
-
-//加解密的轮是否需要相呼应？
-
-~~是否需要满足加解密过程中，相应的轮函数执行完毕，此时内存中的state恰好可以互为输入输出？
-如上节log中解密第八轮做invMixColumns输出的state为：
-invMixColumns:
-        49 45 7f 77
-        db 39 02 de
-        87 53 d2 96
-        3b 89 f1 1a
-应该要对应解密第二轮中MixColumns操作的输入，即ShiftRows的输出：
-ShiftRows:
-        49 45 7f 77
-        db 39 02 de
-        87 53 d2 96
-        3b 89 f1 1a
-~~
-
-当然，把所有过程展开来看，我们的两份代码对输入明文内容所作操作是完全相同的。区别在于选择的头尾不同，所以对中间的循环体处理自然就不一致了。那么本质上，state经历的每个变换过程是一致的。
-
-#### 2. 等价逆运算
-根据前文的描述，虽然加解密过程在结构上大体相似，但实际轮函数变换顺序是不一样的。这就造成了加密和解密需要准备不同的软件、固件模块或是硬件电路，对于同时需要实现加解密的应用而言，这个差异增加了落地成本。为了解决这个问题，AES提供了等价的逆算法。
-从Fig 5.和Fig 12.可以看出，标准加解密过程的轮结构分别为:
-SubBytes->ShiftRows->Mixcolumns->AddroundKey
-invShiftRows->invSubBytes->AddRoundKey->invMixColumns
-因此，解密轮的前后两个过程都需要调换。
-先来看invShiftRows和invSubBytes，逆行移位和逆字节替代是可以直接交换的,因为行移位改变state中的字节顺序，而字节替代使用S盒替换state中的字节内容。就像先砌墙再刷漆和先刷漆再砌墙一样（当然是在无敌的理想环境），工序的先后不会影响墙壁最终呈现出的色彩和图案。*The SubBytes() and ShiftRows() transformations commute. The same is true for their inverses.*
-AddRoundKey和invMixColumns稍微复杂一些。轮密钥加和逆列混淆都不会改变state中的字节顺序，且它们都是以字为输入单位(computed as a one-dimensional array of word.)，每次都对state中的一列进行操作。即两个操作对列的输入是线性相关。如此一来，就可以得到以下等式：
-invMixColumns(state &oplus; Roundkey) = invMixColumns(state) &oplus; invMixColumns(Roundkey) 
-设state第一列为[y<sub>0</sub>, y<sub>1</sub>, y<sub>2</sub>, y<sub>3</sub>]，该轮轮密钥第一列为[k<sub>0</sub>, k<sub>1</sub>, k<sub>2</sub>, k<sub>3</sub>]。则矩阵表达为：
-$$
-\begin{matrix}
-    \left[\begin{array}{rr}
-        0E & 0B & 0D & 09\\
-        09 & 0E & 0B & 0D\\
-        0D & 09 & 0E & 0B\\
-        0B & 0D & 09 & 0E
-    \end{array}\right]
-    \left[\begin{array}{rr}
-        y_0 \oplus k_0 \\
-        y_1 \oplus k_1 \\
-        y_2 \oplus k_2 \\
-        y_3 \oplus k_3  
-    \end{array}\right]
-    =
-    \left[\begin{array}{rr}
-        0E & 0B & 0D & 09\\
-        09 & 0E & 0B & 0D\\
-        0D & 09 & 0E & 0B\\
-        0B & 0D & 09 & 0E 
-    \end{array}\right]
-    \left[\begin{array}{rr}
-        y_0 \\
-        y_1 \\
-        y_2 \\
-        y_3  
-    \end{array}\right]
-        \oplus
-    \left[\begin{array}{rr}
-        0E & 0B & 0D & 09\\
-        09 & 0E & 0B & 0D\\
-        0D & 09 & 0E & 0B\\
-        0B & 0D & 09 & 0E 
-    \end{array}\right]
-    \left[\begin{array}{rr}
-        k_0 \\
-        k_1 \\
-        k_2 \\
-        k_3  
-    \end{array}\right]
-\end{matrix}
-$$
-
-那么基于这个等式，就可以通过预先对轮密钥生成加入逆列混淆操作，使用转换后的轮密钥代入轮函数运算，从而达到交换AddRoundKey与invMixColumns调用顺序的目的。实际各轮应用如课本图5.10：
-![equ_inv_cipher](https://ftp.bmp.ovh/imgs/2020/05/3c10e952adaa3ea0.jpg)
-
-Equivalent Inverse Cipher 实现代码如下
-```C
-/**
- * 5.3.5 Equivalent Inverse Cipher
- * Fig.15 For the Equivalent function, key expansion should add pre-invMixColumns.
- * new para@inv: crypto flag, type-uint8_t, 0-encrypt 1-decrypt
- */
-void equ_key_expansion(AES_CYPHER_T mode, uint8_t *key, uint8_t *round, uint8_t inv)
-{
-    uint32_t *w = (uint32_t *)round;
-    uint32_t  t;
-    int      i = 0;
-
-    //密钥扩展部分是相同的
-    printf("Key Expansion:\n");   
-    do {
-        //KeyExpansion code
-    } while (++i < g_aes_nb[mode] * (g_aes_rounds[mode] + 1));
-
-    //Fig.15 implement equivalent inverse cipher
-    //此处注意转换数据类型
-    //invMixColumns传入的是byte 8 bits，而KeyExpansion传入word为32 bits
-    if (1 == inv)
-    {
-        uint8_t *inv_k = (uint8_t *)w;
-        uint8_t tmp_roundkey[4 * 4 * 15] = {0};
-        for (i = 1; i < g_aes_rounds[mode]; i++)
-        {
-            memcpy(&tmp_roundkey[(i - 1) * 16], &inv_k[i * 16], 16);
-            inv_mix_columns(mode, &tmp_roundkey[(i - 1) * 16]);
-        }
-
-        //通过w的地址传给round，第一轮和最后一轮的密钥保持不变
-        memcpy(w + 4, tmp_roundkey, 4 * 4 * (g_aes_rounds[mode] - 1));
-    }
-}
-
-//解密就可以用与加密相同的顺序调用
-/**
- * section 5.3.5
- * Equivalent Inverse Cipher
- * switch functions call order to get a efficient struct
- */
-int aes_equ_decrypt(AES_CYPHER_T mode, uint8_t *data, int len, uint8_t *key)
-{
-    uint8_t w[4 * 4 * 15] = {0}; /* round key */
-    uint8_t s[4 * 4] = {0}; /* state */
-
-    int i, j ,nr;
-    
-    /* key expansion for equ-inverse algorithm*/
-    equ_key_expansion(mode, key, w, 1);
-   
-    /* start data cypher loop over input buffer */
-    for (i = 0; i < len; i += 4 * g_aes_nb[mode])
-    {
-        for (j = 0; j < 4 * g_aes_nb[mode]; j++)
-        {
-            s[j] = data[i + j];
-        }
-        
-        /* start AES cypher loop over all AES rounds */
-        //轮函数调用顺序与加密过程一致
-        for (nr = g_aes_rounds[mode]; nr >= 0; nr--)
-        {            
-            if (nr < g_aes_rounds[mode])
-            {
-                inv_sub_bytes(mode, s);                
-                inv_shift_rows(mode, s);
-                if (nr > 0)
-                {
-                    inv_mix_columns(mode, s);
-                }
-            }
-            aes_add_round_key(mode, s, w, nr);
-        }
-       
-        for (j = 0; j < 4 * g_aes_nb[mode]; j++)
-        {
-            data[i + j] = s[j];
-        }
-    }
-    
-    return 0;
-}
-```
-
-#### 3. New Flag
-接下来应该会开分组密码的工作模式这个坑，如果填完就继续开公钥密码学的坑吧(ˉ﹃ˉ)
-
-### VII. 参考文献
-1. [AES标准及Rijndael算法解析](http://blog.dynox.cn/?p=1562)
-2. [FIPS-197](http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf)
-3. [Rijndael_Animation_v4_eng](https://formaestudio.com/rijndaelinspector/archivos/rijndaelanimation.html)
-4. [有限域GF(2^8)的四则运算及拉格朗日插值](https://blog.csdn.net/luotuo44/article/details/41645597)
-5. [AES中S盒的生成原理与变化](https://bbs.pediy.com/thread-253916.htm)
-6. [手动推导计算AES中的s盒的输出](https://blog.csdn.net/u011241780/article/details/80589273)
-7. [How are the AES S-Boxes calculated](https://crypto.stackexchange.com/questions/10996/how-are-the-aes-s-boxes-calculated)
-8. [polynomial in AES MixColumns](https://crypto.stackexchange.com/questions/15850/why-is-the-polynomial-in-aes-mixcolumns-multiplied-modulo-a-reducible-polynomial)
-9. [Figure Guide AES](http://www.moserware.com/2009/09/stick-figure-guide-to-advanced.html)
-10. [The Advanced Encryption Standard: Rijndael](https://math.boisestate.edu/~liljanab/Rijndael-version2.pdf)
