@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/atom_128.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/atom_32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/atom_16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/atom_logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="cryptography,C/C++,AES,Python,Image Processing," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="过去的一年里经历了很多事情，也算尝尽悲欢离合。在我写完高级加密标准-AES之后，计划过半年左右可以把这篇文章完成。但真是没想到高通新方案做下来这么累人，几经波折到现在临近SOP，基础软件平台和操作系统部分基本不太报问题。趁之前出差空闲抽时间把QNX IPC相关的内容做了些demo玩，翻sdk手册看着看着就点到openssl里去了，赶巧顺着把这个摊子收尾。">
+<meta name="keywords" content="cryptography,C&#x2F;C++,AES,Python,Image Processing">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分组密码算法工作模式">
+<meta property="og:url" content="http://yoursite.com/2021/03/19/Block-Cipher-Mode-of-Operation/index.html">
+<meta property="og:site_name" content="二又三">
+<meta property="og:description" content="过去的一年里经历了很多事情，也算尝尽悲欢离合。在我写完高级加密标准-AES之后，计划过半年左右可以把这篇文章完成。但真是没想到高通新方案做下来这么累人，几经波折到现在临近SOP，基础软件平台和操作系统部分基本不太报问题。趁之前出差空闲抽时间把QNX IPC相关的内容做了些demo玩，翻sdk手册看着看着就点到openssl里去了，赶巧顺着把这个摊子收尾。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/46c82f07bd022a9f.jpg">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/68b97ae340bbf1f7.jpg">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/935fcdbef520c648.jpg">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/946a4db17e2f8a42.jpg">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/f107729c374a9995.jpg">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/ec0f709f198f475b.png">
+<meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/04/d0e1febf43f03b82.png">
+<meta property="og:updated_time" content="2021-04-12T15:00:25.883Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="分组密码算法工作模式">
+<meta name="twitter:description" content="过去的一年里经历了很多事情，也算尝尽悲欢离合。在我写完高级加密标准-AES之后，计划过半年左右可以把这篇文章完成。但真是没想到高通新方案做下来这么累人，几经波折到现在临近SOP，基础软件平台和操作系统部分基本不太报问题。趁之前出差空闲抽时间把QNX IPC相关的内容做了些demo玩，翻sdk手册看着看着就点到openssl里去了，赶巧顺着把这个摊子收尾。">
+<meta name="twitter:image" content="https://ftp.bmp.ovh/imgs/2021/04/46c82f07bd022a9f.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/03/19/Block-Cipher-Mode-of-Operation/"/>
+
+
+
+
+
+  <title>分组密码算法工作模式 | 二又三</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?ce0e7edfdd776d2b784b93d9d7a0a8ac";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">二又三</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">∠(ᐛ」∠)＿</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/03/19/Block-Cipher-Mode-of-Operation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ross Zeng">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/pk.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="二又三">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">分组密码算法工作模式</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-03-19T00:28:40+08:00">
+                2021-03-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">全文字数&#58;</span>
+                
+                <span title="全文字数">
+                  5.2k
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  21
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>过去的一年里经历了很多事情，也算尝尽悲欢离合。在我写完<a href="https://zengrx.github.io/2020/02/09/AES-study-based-on-FIPS-197/" target="_blank" rel="noopener">高级加密标准-AES</a>之后，计划过半年左右可以把这篇文章完成。但真是没想到高通新方案做下来这么累人，几经波折到现在临近SOP，基础软件平台和操作系统部分基本不太报问题。趁之前出差空闲抽时间把QNX IPC相关的内容做了些demo玩，翻sdk手册看着看着就点到openssl里去了，赶巧顺着把这个摊子收尾。</p>
+<a id="more"></a>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>分组密码是一种加解密方案，它将一个明文分组作为整体加密并且通常得到的是与明文等长的密文分组。一般来说，分组密码的应用范围比流密码要广泛。在接下来的章节里也会提到，使用某些工作模式时，分组密码可以获得与流密码相同的效果。在密码学课堂上，第3章中已经提及分组密码与流密码的概念，在第6章全面地讲解了分组密码的工作模式。</p>
+<p>最早的分组密码标准可以追溯到1980年发布的FIPS PUB 81 <em>DES MODES OF OPERATION</em>，网上找到的都是影印版本，果然够古老。在这篇规范中主要定义了DES的分组操作，以64位即8字节对数据块进行处理。到2001年NIST发布了800-38A，相比FIPS 81，800-38A更加广义地描述了分组模式，没有对底层密码算法做限定，基本适用于所有分组密码。</p>
+<p>这篇文章主旨是对AES的复习延申，所以在下面章节中分析分组模式的底层密码算法都钦定AES。不同于AES原理部分的学习，分组密码模式几乎没有涉及到多少数学理论知识，简单了很多。在掌握了AES核心部分后，结合分组模式就可以将特定16字节数据的处理扩展为对任意长度数据适用。</p>
+<h3 id="五种标准工作模式"><a href="#五种标准工作模式" class="headerlink" title="五种标准工作模式"></a>五种标准工作模式</h3><p>达到处理任意长度数据这个目的大致有两种做法，一是通过填充（padding）将输入的原始数据扩展为16的倍数，使其符合AES轮运算要求，如ECB和CBC；另一种则是在分组设计中使用IV（初始化向量）、AES输出或分组结果作为输入进入AES轮运算。而待加密的原始数据留在之后与AES轮运算输出内容做异或操作，如CFB与OFB。在这一章中将会介绍各个模式的特点、适用场景、发生bit错误时影响范围以及明文泄露会带来怎样的风险。</p>
+<h4 id="ECB-Electronic-Code-Book"><a href="#ECB-Electronic-Code-Book" class="headerlink" title="ECB - Electronic Code Book"></a>ECB - Electronic Code Book</h4><p>电码本模式实在是太乃一吾了，几乎没有什么需要解释的地方，直接贴图：<br><img src="https://ftp.bmp.ovh/imgs/2021/04/46c82f07bd022a9f.jpg" alt="ASE-ECB"></p>
+<p>可以看到ECB就是多个AES core的组合，一次处理一组明文分块，每次使用相同的密钥，即每组明文都有唯一的密文与之对应。电码本的命名也正是源于这种特征。另外，ECB模式要求待处理的数据长度为16的倍数，当数据长度不满足要求时则先进行填充操作。填充有很多方式，比如ISO 7816-4，这个是智能卡的标准；还有PKCS5，ANSI_X923等等。</p>
+<p>电码本模式比较适合处理小数据，如传递加密密钥，或是内部定义的UART或SPI协议数据。对于很长的数据使用ECB模式就可能不安全。尤其在一段消息中存在若干相同的明文组，那么密文也会出现对应数量的相同密文组。</p>
+<p>由于ECB模式的分组之间毫无干系，所以在传输过程中发生的bit错误仅仅影响其存在的一个分组。</p>
+<h4 id="CBC-Cipher-Block-Chaining"><a href="#CBC-Cipher-Block-Chaining" class="headerlink" title="CBC - Cipher Block Chaining"></a>CBC - Cipher Block Chaining</h4><p>为了克服ECB的弱点，最简单的应对方法是对明文组做一些预处理，CBC模式在加密运算前将当前明文组与上一组的密文输出做异或运算，如此一来加密算法每次的输入就与明文分组没有固定关系。与ECB模式一样，CBC也要求待处理数据长度为16的倍数。<br><img src="https://ftp.bmp.ovh/imgs/2021/04/68b97ae340bbf1f7.jpg" alt="AES-CBC"></p>
+<p>CBC要求第一个明文块与一个初始化向量（IV）异或后再加密，以产生第一个密文分组。解密时使用第一个解密结果与IV异或恢复出第一个明文块，所以消息收发双方必须要共享IV。另外，由于加密时除第一组以外，之后每一组的输入都需要上一组密文参与，所以CBC模式的加密无法做到并行处理；而解密时已经得到了完整的密文，所以解密运算可以做到并行。</p>
+<p>当传输过程中发生bit错误时，错误将会影响本组及下一组共两组明文的解密结果。</p>
+<p>CBC在分组密码中应用非常广泛，设计模式也被用于实现消息认证算法（DAA与CMAC）。</p>
+<p>简单的CBC模式加解密实现如下：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * AES Cipher Block Chainning Mode</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">aes_encrypt_cbc</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *data, <span class="keyword">int</span> len, <span class="keyword">uint8_t</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                    <span class="keyword">uint8_t</span> *iv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">uint8_t</span> *d;      <span class="comment">//data block</span></span><br><span class="line">    <span class="keyword">uint8_t</span> *i;      <span class="comment">//input block</span></span><br><span class="line">    <span class="keyword">uint8_t</span> *iv_tmp; <span class="comment">//iv</span></span><br><span class="line">    <span class="keyword">int</span> len_tmp = len;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> n;           <span class="comment">//counter, from 0 to 31</span></span><br><span class="line">    d = <span class="built_in">malloc</span>(len);</span><br><span class="line">    <span class="built_in">memcpy</span>(d, data, len);</span><br><span class="line">    iv_tmp = <span class="built_in">malloc</span>(len);</span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp, iv, <span class="number">16</span>);</span><br><span class="line">    i = <span class="built_in">malloc</span>(len);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (len_tmp)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//iv xor data block</span></span><br><span class="line">        <span class="keyword">for</span> (n = <span class="number">0</span>; n &lt; <span class="number">16</span> &amp;&amp; n &lt; len_tmp; n++)</span><br><span class="line">        &#123;</span><br><span class="line">            i[n] = d[n] ^ iv_tmp[n];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//this round's cipher equ next round's iv</span></span><br><span class="line">        <span class="comment">//so prepare it, the n is next round's index</span></span><br><span class="line">        <span class="keyword">for</span> (; n &lt; <span class="number">16</span>; n++)</span><br><span class="line">        &#123;</span><br><span class="line">            i[n] = iv_tmp[n];</span><br><span class="line">        &#125;</span><br><span class="line">        aes_encrypt(mode, i, key);</span><br><span class="line">        iv_tmp = i;</span><br><span class="line">        <span class="keyword">if</span> (len_tmp &lt;= <span class="number">16</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        len_tmp -= <span class="number">16</span>; <span class="comment">//control the loop</span></span><br><span class="line">        d += <span class="number">16</span>; <span class="comment">//pointer address add</span></span><br><span class="line">        i += <span class="number">16</span>; <span class="comment">//pointer address add</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memcpy</span>(data, &amp;i[<span class="number">16</span> - len], len);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * AES Cipher Block Chainning Decrypt</span></span><br><span class="line"><span class="comment"> * decryption can be performed in parallel</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">aes_decrypt_cbc</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *data, <span class="keyword">int</span> len, <span class="keyword">uint8_t</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                    <span class="keyword">uint8_t</span> *iv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">uint8_t</span> *d; <span class="comment">// data</span></span><br><span class="line">    <span class="keyword">uint8_t</span> *i; <span class="comment">// input</span></span><br><span class="line">    <span class="keyword">uint8_t</span> *iv_tmp; <span class="comment">// iv tmp</span></span><br><span class="line">    <span class="keyword">int</span> len_tmp = len;</span><br><span class="line"></span><br><span class="line">    d = <span class="built_in">malloc</span>(len);</span><br><span class="line">    i = <span class="built_in">malloc</span>(len);</span><br><span class="line">    <span class="built_in">memcpy</span>(i, data, len);</span><br><span class="line">    iv_tmp = <span class="built_in">malloc</span>(len);</span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp, iv, <span class="number">16</span>);</span><br><span class="line">    <span class="comment">//这里预先把密文数据放在iv的后面，当然也可以起(len / 16)个线程同时处理</span></span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp + <span class="number">16</span>, data, len - <span class="number">16</span>); <span class="comment">// perpare iv</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (len_tmp)</span><br><span class="line">    &#123;</span><br><span class="line">        aes_equ_decrypt(mode, i, key);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> n = <span class="number">0</span>; n &lt; <span class="number">16</span>; n++)</span><br><span class="line">        &#123;</span><br><span class="line">            d[n] = i[n] ^ iv_tmp[n];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (len_tmp &lt;= <span class="number">16</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        len_tmp -= <span class="number">16</span>;</span><br><span class="line">        d += <span class="number">16</span>;</span><br><span class="line">        i += <span class="number">16</span>;</span><br><span class="line">        iv_tmp += <span class="number">16</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memcpy</span>(data, &amp;d[<span class="number">16</span> - len], len);</span><br><span class="line">    <span class="built_in">free</span>(&amp;d[<span class="number">16</span> - len]);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="CFB-Cipher-FeedBack"><a href="#CFB-Cipher-FeedBack" class="headerlink" title="CFB - Cipher FeedBack"></a>CFB - Cipher FeedBack</h4><p>前两种模式在实际使用过程中大都需要对原始数据进行填充，而这一节中讨论的密文反馈模式则可以通过移位将分组密码模拟成流密码使用。<br><img src="https://ftp.bmp.ovh/imgs/2021/04/935fcdbef520c648.jpg" alt="AES-CFB"></p>
+<p>首先看加密过程，加密函数的输入是128位的移位寄存器，第一组输入为初始向量IV。加密函数输出最左边的s位与明文第一个s位分段内容异或得到第一个密文单元；移位寄存器左移s位，随后将密文单元填入移位寄存器最右边s位产生下一组加密函数的输入数据，直至所有明文单元被加密完。<br>解密过程同理，但有一个比较容易被忽视的点在于解密过程中使用的也是加密函数而非解密函数。原因很容易解释：将AES的部分看作一个整体，密文通过明文与算法输出异或得到，那么解密时只有将密文与算法输出做异或才能够正确还原出明文。实际上，在CFB, OFB, CTR模式中，解密过程使用的都是加密函数。这也是我在<a href="https://zengrx.github.io/2020/02/09/AES-study-based-on-FIPS-197/" target="_blank" rel="noopener">高级加密标准-AES</a>中所提到“不过AES中加密被认为比解密更加重要”的原因之一。</p>
+<p>而CFB模式的bit错误影响相对复杂一些，当某次传输中错误存在于s bits中，其造成的影响直到被左移出128位移位寄存器才结束，即bit错误影响范围为1+(b/s)组明文。虽然看起来受影响的组数更多，但由于CFB模式每轮只产生s bits的有效数据，实际上影响的总比特位与CBC是一样的。</p>
+<p>我印象中以前上课的时候有同学看到bits移位突然脑子转不过来啊，认为该组解密后错误仅存在于算法输出的s bits中，这里也提一下。因为我们的假设是在密文传输过程中信道存在噪声导致接收到的数据出现比特翻转错误。而AES轮运算中shiftrows与mixcolumns两个过程结合能够将一个bit的错误扩散到整个state上（mixcolumns将错误扩散到一整列，下一轮的shiftrows将一列错误分散到不同列，再由mixcolumns扩散到整个state），导致整组数据报废，不存在某个或某几个位置的字节幸免。<br>而这又引出一个有意思的话题：针对AES的差分错误分析，以AES-128为例，加解密过程包含10轮运算，但是要注意最后一轮仅仅做了subbytes, shiftrows, addroundkey三个运算，这就导致如果在第9轮的shiftrows之后注入1bit错误，到第10轮结束仅仅会影响到4个字节数据，且发生错误的数据位置与注入错误的列相关，遍历四种错误注入组合后能够推导出末轮的轮密钥，从而反推出AES key。不过这两个点和CFB模式没啥关系，发散了一下(<em>/ω＼</em>)</p>
+<p>CFB可以被当作流密码使用，其的密文与明文等长，能够最高效地利用信道传输能力。相比之下分组密码会在解密的最后一轮至多会丢弃127 bits的数据，即最多会浪费127 bits的传输能力。但CFB并不是典型的流密码，它的明文也参与了位流的生成。</p>
+<p>NIST中还介绍了cfb1，cfb8和cfb64等模式，一般来说cfb8比较常用。下面是cfb8和cfb128的简单实现：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Cipher Feedback Mode</span></span><br><span class="line"><span class="comment"> * 128 bits shift, next round input equ cipher</span></span><br><span class="line"><span class="comment"> * no need padding</span></span><br><span class="line"><span class="comment"> * A.K.A. full-block CFB</span></span><br><span class="line"><span class="comment"> * enc is encrypt flag, 0-decrypt 1-encrypt</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">aes_encrypt_cfb128</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *data, <span class="keyword">int</span> len, <span class="keyword">uint8_t</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                       <span class="keyword">uint8_t</span> *iv, <span class="keyword">int</span> *num, <span class="keyword">int</span> enc)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> n, l = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">uint8_t</span> *iv_tmp;</span><br><span class="line">    <span class="keyword">uint8_t</span> *cipher;</span><br><span class="line"></span><br><span class="line">    cipher = <span class="built_in">malloc</span>(len);</span><br><span class="line">    iv_tmp = <span class="built_in">malloc</span>(<span class="number">16</span>);</span><br><span class="line">    <span class="keyword">if</span> (cipher == <span class="literal">NULL</span> || iv_tmp == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"malloc failed\n"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp, iv, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    n = *num; <span class="comment">// data len check</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (l &lt; len)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (n == <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            aes_encrypt(mode, iv_tmp, key);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (enc)</span><br><span class="line">        &#123;</span><br><span class="line">            cipher[l] = iv_tmp[n] ^= data[l];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            cipher[l] = iv_tmp[n] ^ data[l];</span><br><span class="line">            iv_tmp[n] = data[l];</span><br><span class="line">        &#125;</span><br><span class="line">        l++;</span><br><span class="line">        n = (n + <span class="number">1</span>) % <span class="number">16</span>;</span><br><span class="line">        *num = n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">memcpy</span>(data, cipher, len);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * cfb 8 bits shift</span></span><br><span class="line"><span class="comment"> * enc: 0-decrypt 1-encrypt</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">aes_encrypt_cfb8</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *data, <span class="keyword">int</span> len, <span class="keyword">uint8_t</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                     <span class="keyword">uint8_t</span> *iv, <span class="keyword">int</span> enc)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> n, l = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">uint8_t</span> *iv_tmp = <span class="built_in">malloc</span>(<span class="number">32</span> + <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp, iv, <span class="number">16</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp + <span class="number">16</span>, iv, <span class="number">16</span>);</span><br><span class="line">    <span class="keyword">uint8_t</span> *d = <span class="built_in">malloc</span>(len);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (l &lt; len)</span><br><span class="line">    &#123;</span><br><span class="line">        aes_encrypt(mode, iv_tmp, key);</span><br><span class="line">        d[l] = iv_tmp[<span class="number">32</span>] = iv_tmp[<span class="number">0</span>] ^ data[l];</span><br><span class="line">        <span class="comment">// printf("%02x\n", d[l]);</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="number">0</span> == enc)</span><br><span class="line">        &#123;</span><br><span class="line">            iv_tmp[<span class="number">32</span>] = data[l];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//shift 8 bits</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">16</span>; i &lt; <span class="number">32</span>; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            iv_tmp[i] = iv_tmp[i + <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">memcpy</span>(iv_tmp, &amp;iv_tmp[<span class="number">16</span>], <span class="number">16</span>);</span><br><span class="line">        l++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memcpy</span>(data, d, len);</span><br><span class="line">    <span class="built_in">free</span>(iv_tmp);</span><br><span class="line">    <span class="built_in">free</span>(d);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="OFB-Output-FeekBack"><a href="#OFB-Output-FeekBack" class="headerlink" title="OFB - Output FeekBack"></a>OFB - Output FeekBack</h4><p>OFB的结构与CFB有些相似，同样可以模拟流密码。但OFB使用加密函数的输出作为下一轮算法输入，所以其加解密过程都不可以并行运算，而CFB的解密过程可以并行。<br><img src="https://ftp.bmp.ovh/imgs/2021/04/946a4db17e2f8a42.jpg" alt="AES-OFB"></p>
+<p>OFB极其适合在易出现噪音的信道中传输数据，其bit错误不会发生扩散，仅仅影响对应的一个bit位。在传输数字信号，音视频这种单比特错误容忍度较高或者以纠错码编码过的数据简直无敌。但是要注意OFB的iv必需是一个时变值，因为OFB的加密输出完全不依赖明文，仅仅与iv和key相关。假如iv和key都是固定值，等同于与明文进行异或的输出就是固定的，一旦这些输出被攻击者碰撞出来，通过简单的异或操作就能将密文还原成明文。另一个问题是OFB抵抗消息流篡改能力很弱，因为其bit错误不会扩散，那么攻击者完全可以在密文中修改bit值并且更新校验码，从而使改动不被纠错码发现，破坏了信息安全的不可篡改性。</p>
+<p>代码简单实现如下：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * AES OFB</span></span><br><span class="line"><span class="comment"> * do remember this mode requires iv is a nonce.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">aes_encrypt_ofb</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *data, <span class="keyword">int</span> len, <span class="keyword">uint8_t</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                    <span class="keyword">uint8_t</span> *iv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret, l = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">uint8_t</span> *iv_tmp = <span class="built_in">malloc</span>(<span class="number">16</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(iv_tmp, iv, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (l &lt; len)</span><br><span class="line">    &#123;</span><br><span class="line">        aes_encrypt(mode, iv_tmp, key);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">16</span> &amp;&amp; l + i &lt; len; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            data[l + i] ^= iv_tmp[i];</span><br><span class="line">        &#125;</span><br><span class="line">        l += <span class="number">16</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(iv_tmp);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="CTR-Counter"><a href="#CTR-Counter" class="headerlink" title="CTR - Counter"></a>CTR - Counter</h4><p>CTR即计数器模式，通篇下来我感觉对这个模式最陌生，翻了翻课本发现真是讲了个寂寞难怪没印象，还是看文献靠谱。从图上可以看到，加解密流程都不算复杂，有一些类似OFB，甚至可以把它叫做IFB（input feedback哈哈）？因为NIST批准的分组模式中，除了ECB之外都需要包含反馈机制，所以可以将counter理解为input block的反馈结果（forward cipher to a set of input blocks, called counters）。</p>
+<p><img src="https://ftp.bmp.ovh/imgs/2021/04/f107729c374a9995.jpg" alt="AES-CTR"></p>
+<p>CTR模式中counter的初始值T<sub>1</sub>必须为时变值（nonce），且各个消息分组所使用的counter值T<sub>i</sub>必须是不同的，与OFB同样都需要保证参与明文异或的输出值不能重复，否则将无法保证明文分组的保密性。NIST的附录B中重点讨论了CTR模式的counter block生成准则，有以下两点：1. 组成input值的counter需要由递增函数生成以保证每个counter block不会重复；2. 需要选择一个合适的初始值来保证后续参与到消息分组运算的counters（各组input block）都是唯一的。同时，NIST仅仅是建议了一种安全使用CTR模式的方式，并没有规范counters生成的标准算法。其中一种可以表达为8 bytes nonce + 8 bytes counter。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">如nonce值为</span><br><span class="line">9e b7 6f ac 45 af 8e 51 30 c8 1c 46 a3 5c e4 11</span><br><span class="line">第一组input组成方式为 nonce|counter</span><br><span class="line">9e b7 6f ac 45 af 8e 51 00 00 00 00 00 00 00 00</span><br><span class="line">接下来则分别是</span><br><span class="line">9e b7 6f ac 45 af 8e 51 00 00 00 00 00 00 00 01</span><br><span class="line">9e b7 6f ac 45 af 8e 51 00 00 00 00 00 00 00 02</span><br><span class="line">9e b7 6f ac 45 af 8e 51 00 00 00 00 00 00 00 03</span><br><span class="line">...</span><br><span class="line">9e b7 6f ac 45 af 8e 51 ff ff ff ff ff ff ff ff</span><br></pre></td></tr></table></figure>
+<p>对于一段消息message，counters需要唯一，所以消息的分组个数不能超过2<sup>64</sup>即消息总大小不超过2<sup>64</sup>x16 bytes，这已经是一个很恐怖的数据量了。就算把counter占位减半，使用12字节nonce和4字节counter，能够处理的消息总大小也达到了64G。</p>
+<p>简单的代码实现如下，其中ctr128_inc是一个平平无奇的大数自增<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * increment counter to generate input block</span></span><br><span class="line"><span class="comment"> * do notice the total block number N should</span></span><br><span class="line"><span class="comment"> * less then 2^64 in AES, otherwise the uniqueness</span></span><br><span class="line"><span class="comment"> * of counter block will lost.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">ctr128_inc</span><span class="params">(<span class="keyword">uint8_t</span> *counter)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">uint32_t</span> n = <span class="number">16</span>, i = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        --n;</span><br><span class="line">        i += counter[n]; <span class="comment">// increase</span></span><br><span class="line">        counter[n] = (<span class="keyword">uint8_t</span>)i; <span class="comment">// discard carry if 0xff</span></span><br><span class="line">        i &gt;&gt;= <span class="number">8</span>; <span class="comment">// clear original value but keep the carry</span></span><br><span class="line">    &#125; <span class="keyword">while</span> (n);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * AES CTR</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">aes_encrypt_ctr</span><span class="params">(AES_CYPHER_T mode, <span class="keyword">uint8_t</span> *data, <span class="keyword">int</span> len, <span class="keyword">uint8_t</span> *key,</span></span></span><br><span class="line"><span class="function"><span class="params">                    <span class="keyword">uint8_t</span> *iv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret, l = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">uint8_t</span> *input = <span class="built_in">malloc</span>(<span class="number">16</span>);</span><br><span class="line">    <span class="comment">// the input formated as first 8bytes nonce then fill 8bytes counter</span></span><br><span class="line">    <span class="built_in">memset</span>(input, <span class="number">0</span>, <span class="number">16</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(input, iv, <span class="number">8</span>);</span><br><span class="line">    <span class="keyword">uint8_t</span> *counter = <span class="built_in">malloc</span>(<span class="number">16</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(counter, input, <span class="number">16</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(l &lt; len)</span><br><span class="line">    &#123;</span><br><span class="line">        aes_encrypt(mode, input, key);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">16</span> &amp;&amp; l + i &lt; len; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            data[l + <span class="number">1</span>] ^= input[i];</span><br><span class="line">        &#125;</span><br><span class="line">        ctr128_inc(counter);</span><br><span class="line">        <span class="built_in">memcpy</span>(counter, iv, <span class="number">8</span>);</span><br><span class="line">        <span class="built_in">memcpy</span>(input, counter, <span class="number">16</span>);</span><br><span class="line">        l += <span class="number">16</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(input);</span><br><span class="line">    <span class="built_in">free</span>(counter);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="分组模式在图像中的表达"><a href="#分组模式在图像中的表达" class="headerlink" title="分组模式在图像中的表达"></a>分组模式在图像中的表达</h3><p>这是我觉得比较有意思的事情，也是想自己实现分组模式的源动力——如何直观地体现AES比特扩散能力以及分组模式对密文混淆程度的影响。至少我非常不认同密码学实验课上用诸如txt，hexview的玩意去看一堆16进制字符串，这些东西在不转化成ascii码之前信息熵就已经高得离谱。使用未经压缩的bitmap位图是不错的选择。在网上草草搜了一圈没看到现成的代码可以抄一抄，直接调openssl接口又感觉太无趣，以前做<a href="https://github.com/zengrx/S.M.A.R.T" target="_blank" rel="noopener">S.M.A.R.T.</a>的时候玩过一些图像处理，万事俱备刚好从头到尾自己写一遍。<br>那么这里用的位图是RGB888，不带alpha通道，每个像素占24比特数据。AES中的state包含了五个完整像素点与一个R值。测试用的python代码如下（万年不更新，上古py2.7）：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">openImageFIle</span><span class="params">(path)</span>:</span></span><br><span class="line">    img = Image.open(path)</span><br><span class="line">    img.show()</span><br><span class="line">    <span class="keyword">return</span> img</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">convertImage2Buf</span><span class="params">(img, path)</span>:</span></span><br><span class="line">    pixels = img.load()</span><br><span class="line">    f = open(path, <span class="string">"w"</span>)</span><br><span class="line">    f.writelines(<span class="string">"unsigned char pic[] = &#123;\n"</span>)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(img.size[<span class="number">0</span>]):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> range(img.size[<span class="number">1</span>]):</span><br><span class="line">            line = <span class="string">", "</span>.join(map(str, pixels[i, j]))</span><br><span class="line">            line = line + <span class="string">",\n"</span></span><br><span class="line">            f.writelines(line)</span><br><span class="line">    f.writelines(<span class="string">"&#125;;"</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">createNewImage</span><span class="params">(img, path)</span>:</span></span><br><span class="line">    pixels = img.load()</span><br><span class="line">    f = open(path, <span class="string">"r"</span>)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(img.size[<span class="number">0</span>]):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> range(img.size[<span class="number">1</span>]):</span><br><span class="line">            line = f.readline()</span><br><span class="line">            line = line.strip()</span><br><span class="line">            line = line.split(<span class="string">','</span>)</span><br><span class="line">            line = map(int, line)</span><br><span class="line">            r = line[<span class="number">0</span>]</span><br><span class="line">            g = line[<span class="number">1</span>]</span><br><span class="line">            b = line[<span class="number">2</span>]</span><br><span class="line">            pixels[i, j] = (r, g, b)</span><br><span class="line">    img.show()</span><br><span class="line"></span><br><span class="line"><span class="comment"># python imgtest.py -in ./pk.bmp ./out.txt</span></span><br><span class="line"><span class="comment"># python imgtest.py -out ./pk.bmp ./test.h</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    myimg = openImageFIle(sys.argv[<span class="number">2</span>])</span><br><span class="line">    <span class="keyword">if</span> sys.argv[<span class="number">1</span>] == <span class="string">"-in"</span>:</span><br><span class="line">        createNewImage(myimg, sys.argv[<span class="number">3</span>])</span><br><span class="line">    <span class="keyword">elif</span> sys.argv[<span class="number">1</span>] == <span class="string">"-out"</span>:</span><br><span class="line">        convertImage2Buf(myimg, sys.argv[<span class="number">3</span>])</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">"param err"</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="分组模式的差异"><a href="#分组模式的差异" class="headerlink" title="分组模式的差异"></a>分组模式的差异</h4><p>可以看到我的经典互联网冲浪专用头像，经过ECB模式加密后图片轮廓依稀可见，字母几乎可以直接看出来，并且周围的背景色块重复出现，说明原始数据是相同的，如果传递含有语义的数据则难以抵抗统计学分析。很直观地说明了ECB模式无法有效隐藏原始数据中的结构信息。相比之下CBC与CFB则是一片混乱，因为它们在加密过程中每组数据都受到前一组的运算影响，能够将变化扩散到所有分组中。</p>
+<p><img src="https://ftp.bmp.ovh/imgs/2021/04/ec0f709f198f475b.png" alt="modes compare"></p>
+<p>当然也不能放过这张经典的tux比较图<br><img src="https://ftp.bmp.ovh/imgs/2021/04/d0e1febf43f03b82.png" alt="tux"></p>
+<h4 id="传输中密文的bit错误"><a href="#传输中密文的bit错误" class="headerlink" title="传输中密文的bit错误"></a>传输中密文的bit错误</h4><p>传输过程中发生bit错误对解密造成的影响当然也能够通过图像来表达，但实际上效果可能不如想象中那么好。我自己大致尝试了几种模式，如在24位的bitmap中使用CBC模式实验，每个bit会带出6个像素的错误，不过没有体现出对输出bit影响的关系。所以想研究各个模式下的错误扩散直接用hex对比应该会更加合适。<br>另外在实际应用中，发生错误的场景还包含了加密过程明文错误，传输中的iv或key错误，传输中密文丢失或增加等等情况，密文的bit翻转错误仅仅是其中之一。各分组模式对于以上错误的表现也有所不同。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>结合上一篇<a href="https://zengrx.github.io/2020/02/09/AES-study-based-on-FIPS-197/" target="_blank" rel="noopener">AES原理介绍</a>，这两篇文章算是把AES基本的理论知识点梳理了一遍。在实际工程应用中还存在着很多新内容和优化项，例如MixColumns可以构建GF(256)上的乘法表来加快加解密速度，如果不打算使用ECB与CBC模式，还能够将这张乘法表缩减一半的内容；还有存储设备上的数据加密会倾向使用XTS模式（如android fbe选择了AES-256-XTS），不需要额外存储iv，加解密都可以并行计算，一个分组损坏不影响后续内容；Android的fde如何处理DEK, KEK，如何应用安全性更强的Scrypt算法以抵抗彩虹表等等。Linux, Andriod系统安全中内核提供的安全加固方案也非常成熟，而掌握对称密码的基本原理，浏览过相关知识发展的过程，再回过头去研究这些内容的设计与实现也会更加得心应手。</p>
+<h3 id="new-flag"><a href="#new-flag" class="headerlink" title="new flag"></a>new flag</h3><p>对称密码的复习到这里就告一段落了，接下来将会进入到公钥密码学部分。大致会是数论、Diffie-Hellman、RSA和ECC？不知道什么时候能填完，总之flag先立起来。最后，就以里克尔的诗作为结尾吧：</p>
+<blockquote>
+<p>&quot;Let everything happen to you<br>Beauty and terror<br>Just keep going<br>No feeling is final.&quot;</p>
+</blockquote>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><ol>
+<li>密码编码学与网络安全（第五版）</li>
+<li><a href="http://www.umich.edu/~x509/ssleay/fip81/fip81.html" target="_blank" rel="noopener">FIPS-81 DES MODES OF OPERATION</a></li>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf" target="_blank" rel="noopener">NIST 800-38A Recommendation for Block Cipher Modes of Operation</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block Cipher Mode of Operation</a></li>
+<li><a href="https://crypto.stackexchange.com/questions/83419/openssl-aes-128-cfb-does-not-produce-expected-size" target="_blank" rel="noopener">Why openssl aes-128-cfb does not produce expected size</a></li>
+<li><a href="https://www.cnki.com.cn/Article/CJFDTotal-FDXB201303002.htm" target="_blank" rel="noopener">对称加密算法AES和DES的差分错误分析[J]. 复旦学报(自然科学版),2013,52(3)</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Padding_%28cryptography%29" target="_blank" rel="noopener">Padding_(cryptography)</a></li>
+<li><a href="https://github.com/openssl/openssl" target="_blank" rel="noopener">openssl@github</a></li>
+<li><a href="https://blog.csdn.net/smilesooo/article/details/110727005" target="_blank" rel="noopener">bmp，png, jpeg图片文件格式分析</a></li>
+<li><a href="https://stackoverflow.com/questions/20304438/how-can-i-use-the-python-imaging-library-to-create-a-bitmap" target="_blank" rel="noopener">Use python imging-library create a bitmap</a></li>
+<li><a href="https://www.kite.com/python/examples/3199/pil-edit-an-image-pixel-by-pixel" target="_blank" rel="noopener">Python pixel edit PIL lib</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/cryptography/" rel="tag"># cryptography</a>
+          
+            <a href="/tags/C-C/" rel="tag"># C/C++</a>
+          
+            <a href="/tags/AES/" rel="tag"># AES</a>
+          
+            <a href="/tags/Python/" rel="tag"># Python</a>
+          
+            <a href="/tags/Image-Processing/" rel="tag"># Image Processing</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/12/31/The-Flame-of-Sisyphus/" rel="next" title="火苗">
+                <i class="fa fa-chevron-left"></i> 火苗
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/pk.png"
+                alt="Ross Zeng" />
+            
+              <p class="site-author-name" itemprop="name">Ross Zeng</p>
+              <p class="site-description motion-element" itemprop="description">Nothing really matters</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/zengrx" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/rx_z" target="_blank" title="OSChina">
+                    
+                      <i class="fa fa-fw fa-globe"></i>OSChina</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://steamcommunity.com/id/zengrx/" target="_blank" title="Steam">
+                    
+                      <i class="fa fa-fw fa-steam"></i>Steam</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.instagram.com/zeng_rx/" target="_blank" title="Instagram">
+                    
+                      <i class="fa fa-fw fa-instagram"></i>Instagram</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://yarrow1995.github.io/" title="Madoka酱" target="_blank">Madoka酱</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text"><a href="#&#x6982;&#x8FF0;" class="headerlink" title="&#x6982;&#x8FF0;"></a>&#x6982;&#x8FF0;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#五种标准工作模式"><span class="nav-number">2.</span> <span class="nav-text"><a href="#&#x4E94;&#x79CD;&#x6807;&#x51C6;&#x5DE5;&#x4F5C;&#x6A21;&#x5F0F;" class="headerlink" title="&#x4E94;&#x79CD;&#x6807;&#x51C6;&#x5DE5;&#x4F5C;&#x6A21;&#x5F0F;"></a>&#x4E94;&#x79CD;&#x6807;&#x51C6;&#x5DE5;&#x4F5C;&#x6A21;&#x5F0F;</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ECB-Electronic-Code-Book"><span class="nav-number">2.1.</span> <span class="nav-text"><a href="#ECB-Electronic-Code-Book" class="headerlink" title="ECB - Electronic Code Book"></a>ECB - Electronic Code Book</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CBC-Cipher-Block-Chaining"><span class="nav-number">2.2.</span> <span class="nav-text"><a href="#CBC-Cipher-Block-Chaining" class="headerlink" title="CBC - Cipher Block Chaining"></a>CBC - Cipher Block Chaining</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CFB-Cipher-FeedBack"><span class="nav-number">2.3.</span> <span class="nav-text"><a href="#CFB-Cipher-FeedBack" class="headerlink" title="CFB - Cipher FeedBack"></a>CFB - Cipher FeedBack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#OFB-Output-FeekBack"><span class="nav-number">2.4.</span> <span class="nav-text"><a href="#OFB-Output-FeekBack" class="headerlink" title="OFB - Output FeekBack"></a>OFB - Output FeekBack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CTR-Counter"><span class="nav-number">2.5.</span> <span class="nav-text"><a href="#CTR-Counter" class="headerlink" title="CTR - Counter"></a>CTR - Counter</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分组模式在图像中的表达"><span class="nav-number">3.</span> <span class="nav-text"><a href="#&#x5206;&#x7EC4;&#x6A21;&#x5F0F;&#x5728;&#x56FE;&#x50CF;&#x4E2D;&#x7684;&#x8868;&#x8FBE;" class="headerlink" title="&#x5206;&#x7EC4;&#x6A21;&#x5F0F;&#x5728;&#x56FE;&#x50CF;&#x4E2D;&#x7684;&#x8868;&#x8FBE;"></a>&#x5206;&#x7EC4;&#x6A21;&#x5F0F;&#x5728;&#x56FE;&#x50CF;&#x4E2D;&#x7684;&#x8868;&#x8FBE;</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#分组模式的差异"><span class="nav-number">3.1.</span> <span class="nav-text"><a href="#&#x5206;&#x7EC4;&#x6A21;&#x5F0F;&#x7684;&#x5DEE;&#x5F02;" class="headerlink" title="&#x5206;&#x7EC4;&#x6A21;&#x5F0F;&#x7684;&#x5DEE;&#x5F02;"></a>&#x5206;&#x7EC4;&#x6A21;&#x5F0F;&#x7684;&#x5DEE;&#x5F02;</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#传输中密文的bit错误"><span class="nav-number">3.2.</span> <span class="nav-text"><a href="#&#x4F20;&#x8F93;&#x4E2D;&#x5BC6;&#x6587;&#x7684;bit&#x9519;&#x8BEF;" class="headerlink" title="&#x4F20;&#x8F93;&#x4E2D;&#x5BC6;&#x6587;&#x7684;bit&#x9519;&#x8BEF;"></a>&#x4F20;&#x8F93;&#x4E2D;&#x5BC6;&#x6587;&#x7684;bit&#x9519;&#x8BEF;</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text"><a href="#&#x5C0F;&#x7ED3;" class="headerlink" title="&#x5C0F;&#x7ED3;"></a>&#x5C0F;&#x7ED3;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#new-flag"><span class="nav-number">5.</span> <span class="nav-text"><a href="#new-flag" class="headerlink" title="new flag"></a>new flag</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文献"><span class="nav-number">6.</span> <span class="nav-text"><a href="#&#x53C2;&#x8003;&#x6587;&#x732E;" class="headerlink" title="&#x53C2;&#x8003;&#x6587;&#x732E;"></a>&#x53C2;&#x8003;&#x6587;&#x732E;</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ross Zeng</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a></div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+</body>
+</html>
