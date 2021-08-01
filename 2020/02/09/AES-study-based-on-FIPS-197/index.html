@@ -79,13 +79,13 @@
 
 
 
-<meta name="description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
+<meta name="description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感疫情，返工时间推迟。">
 <meta name="keywords" content="cryptography,C&#x2F;C++,AES,Rijndael">
 <meta property="og:type" content="article">
 <meta property="og:title" content="高级加密标准-AES">
 <meta property="og:url" content="http://yoursite.com/2020/02/09/AES-study-based-on-FIPS-197/index.html">
 <meta property="og:site_name" content="二又三">
-<meta property="og:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
+<meta property="og:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感疫情，返工时间推迟。">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/03/15d12b9d408f7e1e.png">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/03/eadd829da1e58138.jpg">
@@ -95,10 +95,10 @@
 <meta property="og:image" content="http://blog.dynox.cn/wp-content/uploads/2017/02/AES-sbox.jpg">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/04/51dd9b8337651ce4.png">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2020/05/3c10e952adaa3ea0.jpg">
-<meta property="og:updated_time" content="2021-04-05T06:55:52.725Z">
+<meta property="og:updated_time" content="2021-08-01T06:15:12.677Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="高级加密标准-AES">
-<meta name="twitter:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事">
+<meta name="twitter:description" content="去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感疫情，返工时间推迟。">
 <meta name="twitter:image" content="https://ftp.bmp.ovh/imgs/2020/03/15d12b9d408f7e1e.png">
 
 
@@ -370,7 +370,7 @@
       
 
       
-        <p>去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的流感，返工时间推迟。世事难料，或许这段日子在未来会被称作为一个特殊的节点。既然说到这里，干脆多说两句，希望日后自己回看时能够想起一些事情。</p>
+        <p>去年七八月份的一个契机使我开始审视自己对密码学的理解，随后也陆续着手把这些知识的复习提上日程。说老实话，以目前赶项目的进度挤时间学习真是很困难。直到年末接连开始量产爬坡才抽身出来收集资料，想着趁今年春节不回家过年可以先把AES过掉，结果放假前一天下午实在没忍住买了麦田四号J的模型，也在这里顺便预告模型制作的文章好了。按照正常的假期来算，这篇文章势必要拖更，但是赶上春节爆发的<del>流感</del>疫情，返工时间推迟。世事难料，或许这段日子在未来会被称作为一个特殊的节点。既然说到这里，干脆多说两句，希望日后自己回看时能够想起一些事情。</p>
 <blockquote>
 <p>Be a good man, do the right thing.</p>
 </blockquote>
