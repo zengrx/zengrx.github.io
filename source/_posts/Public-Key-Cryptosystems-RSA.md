@@ -47,7 +47,7 @@ tags:
 
 #### 算法设计
 RSA的设计遵循了单向陷门置换，算法本质是大素数分解的计算困难性。并巧妙地借助了模运算来还原明文，通过幂运算隐藏参与通信双方的秘密。虽然不知道Diffile和Hellman是怎么想到了构造幂模运算(RSA paper中的 "The aforementioned method should not be confused with the “exponentiation” technique presented by Diffie and Hellman [1] to solve the key distribution problem")，但我猜同余是个很抓眼球的特性，结合费马小定理看底数和模余数在特定条件下有机会相等，很值得用在这种密码体系的解密中。总之顺着算法思路，可以考虑如下设计:
-$f(x) \; mod \; n = x，f(x)=x^a$，令其中a包含两个密钥相关的内容{e, d}，得到计算式 $(M^e \; mod \; n)^d \; mod \; n = M$
+$f(x) \bmod n = x，f(x)=x^a$，令其中a包含两个密钥相关的内容{e, d}，得到计算式 $(M^e \bmod n)^d \bmod n = M$
 到这里已经有一个隐约的概念，将消息M做幂运算后取模，就算余数和模数被公开也无法得知原消息M，而参与运算的指数{e, d}经过了精心挑选，能够使用余数的幂做模运算还原消息M。这个过程的正确性就由数论中的几个经典问题支撑。
 
 一般教材会计划提前一章学习一些数论知识，有的学校在给信息安全专业制定培养计划时会专门安排专业数学基础课程。其实最初我的打算是写公式时加入相关定理的证明过程，以此来充实整个理论推导过程，但是写着写着发现太<sup>TM</sup>不流畅了，看公式体验真滴差。最后决定先只对RSA Paper稍微补充少量中间步骤，毕竟原论文也是真滴简洁，便于在一定数论基础上的理解。这篇文章并不是科普数论基础，但我认为也有的地方值得多说几句，就写在本章的证明之后。
@@ -78,7 +78,7 @@ $f(x) \; mod \; n = x，f(x)=x^a$，令其中a包含两个密钥相关的内容{
     则方程组有通解为
     $$x = a_1t_1M_1 + a_2t_2M_2 + \cdots + a_nt_nM_n + kM = \sum_{i=1}^n{a_it_iM_i} + kM, \quad k\in \mathbb{Z}$$
     其中，在模$M$意义下有唯一解
-    $$x = \left(\sum_{i=1}^n{a_it_iM_i}\right) \; mod \; M$$
+    $$x = \left(\sum_{i=1}^n{a_it_iM_i}\right) \bmod M$$
 + 模运算及幂运算的一些计算性质
 
 #### 正确性证明
@@ -88,18 +88,18 @@ $$n=p \cdot q$$
 $\phi(n)$是一个很关键的因素，有必要在附录中给出一些证明过程，这里先直接给结论。由于p和q选择了素数，则有
 $$\phi(n) = \phi(p \cdot q) = \phi(p)\cdot\phi(q) = (p-1)(q-1)$$
 回过头来看一眼想要的结果
-$$(M^e \; mod \; n)^d \; mod \; n = M$$
+$$(M^e \bmod n)^d \bmod n = M$$
 如果用抽象代数的方式来表达会非常简洁，模映射是一种环同态，朴素点说呢，这是个这是个朴素的模运算分配律，幂运算可以表示连续的乘法运算，乘法运算可以表示连续的加法运算，所以there's a modular exponentiation property：
-$$a^b \; mod \; c = (a \; mod \; c)^b \; mod \; c$$
+$$a^b \bmod c = (a \bmod c)^b \bmod c$$
 于是可以把目标式可以写作
-$$(M^e \; mod \; n)^d \; mod \; n = M^{ed} \; mod \; n$$
+$$(M^e \bmod n)^d \bmod n = M^{ed} \bmod n$$
 这个转换带来了$e$和$d$的乘积表达。且算法的终极目标是论证下式成立
 $$M^{ed} \equiv M \pmod n$$
-现在手握 $M^{\phi(n)} \equiv 1 \pmod n$ 与 $M^{ed} \; mod \; n$，可以考虑通过1来把 $ed$ 和 $\phi(n)$ 连上线。接下来是一个很关键的设计：随机挑选一个小于$\phi(n)$的大整数$d$，使$d$与$\phi(n)$互素，即
+现在手握 $M^{\phi(n)} \equiv 1 \pmod n$ 与 $M^{ed} \bmod n$，可以考虑通过1来把 $ed$ 和 $\phi(n)$ 连上线。接下来是一个很关键的设计：随机挑选一个小于$\phi(n)$的大整数$d$，使$d$与$\phi(n)$互素，即
 $$gcd(d, \phi(n)) = 1$$
 有了这个就可以保证一定存在模乘法逆元，即一定存在$e$，使得
 $$ed \equiv 1 \pmod {\phi(n)}$$
-结合同余的性质，必定存在$k, k\in \mathbb{Z}$，使得$ed = k \phi(n) + 1$。这个时候不要再往欧拉定理里钻了，再钻就快到死胡同了，换个角度请出费马小定理和中国剩余定理。来看$M^{ed} \; mod \; p$ 与 $M^{ed} \; mod \; q$
+结合同余的性质，必定存在$k, k\in \mathbb{Z}$，使得$ed = k \phi(n) + 1$。这个时候不要再往欧拉定理里钻了，再钻就快到死胡同了，换个角度请出费马小定理和中国剩余定理。来看$M^{ed} \bmod p$ 与 $M^{ed} \bmod q$
 $$
 \begin{align}
 &\because ed = k \phi(n) + 1 \\
@@ -121,18 +121,18 @@ $$M^{ed} \equiv M^{k \phi(n) + 1} \equiv M \pmod n$$
 4. $元素\lbrace e, n \rbrace作为公钥可以公开发布，元素\lbrace d, n\rbrace作为私钥由产生者保管$
 
 传递消息的保密性
->1. $会话请求方需要传递消息M，计算C = M^e \; mod \; n，将C发送给接收方$
-2. $接收方用自己的私钥解密C，计算M = C^d \; mod \; n$
+>1. $会话请求方需要传递消息M，计算C = M^e \bmod n，将C发送给接收方$
+2. $接收方用自己的私钥解密C，计算M = C^d \bmod n$
 
 数字签名与验签
->1. $消息发布方需求公开消息M，计算S = M^d \; mod \; n，将签名S公开$
-2. $获取方用公钥对签名S验证，计算M = S^e \; mod \; n$
+>1. $消息发布方需求公开消息M，计算S = M^d \bmod n，将签名S公开$
+2. $获取方用公钥对签名S验证，计算M = S^e \bmod n$
 
 
 **以下是对一些“易得，显然，不难证明，由上可知”的补充。**
-对于模运算的分配率换个有意思的说法：女术士打桩机杰洛特每次需要用3个弱效突变诱发物合成1个突变诱发物，杰洛特有a个弱效突变诱发物，一波操作之后合成几次忘记了，总之还剩下1个弱效突变诱发物；跑图打了一圈孽鬼沼泽巫婆腐食魔之后又得到了b个弱效突变诱发物，又操作一波合成突变诱发物，最后刚好一个弱效突变诱发物都不剩。这和先有a个弱效突变诱发物再打b个弱效突变诱发物攒在一起合成突变诱发物没有区别。公式一下就是$(a \; mod \; c + b) \; mod \; c = (a + b) \; mod \; c$。多次重复这个过程就是乘法的模运算。而用3个突变诱发物合成1个强效突变诱发物，从弱效突变诱发物的角度看就是幂模。
+对于模运算的分配率换个有意思的说法：女术士打桩机杰洛特每次需要用3个弱效突变诱发物合成1个突变诱发物，杰洛特有a个弱效突变诱发物，一波操作之后合成几次忘记了，总之还剩下1个弱效突变诱发物；跑图打了一圈孽鬼沼泽巫婆腐食魔之后又得到了b个弱效突变诱发物，又操作一波合成突变诱发物，最后刚好一个弱效突变诱发物都不剩。这和先有a个弱效突变诱发物再打b个弱效突变诱发物攒在一起合成突变诱发物没有区别。公式一下就是$(a \bmod c + b) \bmod c = (a + b) \bmod c$。多次重复这个过程就是乘法的模运算。而用3个突变诱发物合成1个强效突变诱发物，从弱效突变诱发物的角度看就是幂模。
 
-当我们看到形如$a \equiv b \pmod n$，需要理解$a$与$b$的绝对值是$n$的倍数，即a b之间形成了模运算下的相等，该式完整表达为$a \; mod \; n =  b \; mod \; n$，千万不要理解成$a \; mod \; n =  b$。在没有特别指明时，$a \; b \; n$ 之间应该是没有具体的大小关系，当然如果$a$和$b$都是正整数且都小于$n$，那么$a$与$b$数值相等。
+当我们看到形如$a \equiv b \pmod n$，需要理解$a$与$b$的绝对值是$n$的倍数，即a b之间形成了模运算下的相等，该式完整表达为$a \bmod n =  b \bmod n$，千万不要理解成$a \bmod n =  b$。在没有特别指明时，$a \; b \; n$ 之间应该是没有具体的大小关系，当然如果$a$和$b$都是正整数且都小于$n$，那么$a$与$b$数值相等。
 
 RSA中用来指代明文消息的M是一个取值范围在0到n的正整数，这是中国剩余定理中提到的唯一解（特解）。中国剩余定理本质上是在求一元线性同余方程组的通解。通俗地说，给出互素的两个数p和q，p q的乘积n，对于正整数a小于n，a可以由a除以p的余数和a除以q的余数唯一确定。加密的消息要能够正确地被还原出来，就需要加以这个范围的限制，否则就只能得到通解。
 
@@ -153,7 +153,7 @@ RSA中用来指代明文消息的M是一个取值范围在0到n的正整数，�
 
 ##### Hastad广播攻击
 也被称为低加密指数广播攻击，结合RSA加密过程与中国剩余定理来理解。首先可以列出RSA加密过程cipher的表达式
-$$C = M^e \; mod \; N$$
+$$C = M^e \bmod N$$
 那么在一个网络中，如果发送方使用相同的公钥元素e对同一个消息M加密发给n个接收方，设公钥为$(e, N_i)$。有同余方程组
 $$
 \begin{cases}
@@ -166,11 +166,11 @@ $$
 如果满足$gcd(N_i, N_j)=1$（p q是两个大素数，其实基本可以认定N之间极大概率是两两互素的），根据中国剩余定理，通过$C_i, N_i, C_j, N_j, \cdots$总能够在一个给定范围内得到$M^e$的确定值，设该值为$\mathbb{C}$。根据RSA算法设计，M一定小于N，可得如下条件
 $$\mathbb{C} = M^e \tag{4-1-1}\label{4-1-1}$$
 $$\mathbb{C} \equiv C_i \pmod {N_i} \tag{4-1-2}\label{4-1-2}$$
-$$\mathbb{C} = \left(\sum_{i=1}^n{C_it_i\mathbb{N}_i}\right) \; mod \; \mathbb{N} \tag{4-1-3}\label{4-1-3}$$
+$$\mathbb{C} = \left(\sum_{i=1}^n{C_it_i\mathbb{N}_i}\right) \bmod \mathbb{N} \tag{4-1-3}\label{4-1-3}$$
 $$M < N_i \quad \forall i | i \in \mathbb{Z},i \leq e \tag{4-1-4}\label{4-1-4}$$
 *注意在${\eqref{4-1-3}}$式中使用的$\mathbb{N}$需要结合CRT的语境来理解，并不是指公钥参数$(e, N_i)$中的$N$。这里不赘述，参考**相关定理及公式**章节**中国剩余定理**内容。*
 根据上述的四个表达式，如果想要确定唯一的$\mathbb{C}$，由${\eqref{4-1-3}}$可知首先要确定模数$\mathbb{N}$的组成。结合等式${\eqref{4-1-1}}$与不等式${\eqref{4-1-4}}$可知$\mathbb{C}$一定小于任意$e$个模数$N$的乘积。作为攻击方在网络中获取发送方至少$e$条数据后，则很容易根据公开信息计算出明文$M$
-$$M = \sqrt[e]{\left(\sum_{i=1}^e{C_it_i\mathbb{N}_i}\right)\; mod \;\left(\prod_{i=1}^e{N_i}\right)}$$
+$$M = \sqrt[e]{\left(\sum_{i=1}^e{C_it_i\mathbb{N}_i}\right)\bmod\left(\prod_{i=1}^e{N_i}\right)}$$
 
 顺便澄清网上的谣言啊，都是抄来抄去不过脑子，说因为$e$太小容易计算所以不安全，👴🏻笑了，以现代计算机的视角3和65537在计算复杂度上几乎没有区别。根本原因是对于小指数$e$而言，获取这个数量的ciphertext相对更容易，攻击者就更容易确定$M$的特解。其实解决这两种攻击漏洞的办法并不是增大$e$的值，而是将$M$编码成对于整个加密体系而言更安全的数值，例如RSA_PKCS1_PADDING，RSA_PKCS1_OAEP_PADDING等。
 
@@ -209,21 +209,21 @@ $$
 
 $$
 \begin{align}
-C^d \; mod \; n & = (a_1t_1M_1 + a_2t_2M_2) \; mod \; M \\
-& = \left(C^d \; mod \; p \cdot (q^{-1} \; mod \; p) \cdot q + C^d \; mod \; q \cdot (p^{-1} \; mod \; q) \cdot p \right) \; mod \; (p \cdot q) \\
-& = \left(C^{d \; mod \; \phi(p)} \; mod \; p \cdot (p^{-1} \; mod \; q) \cdot p + C^{d \; mod \; \phi(q)} \; mod \; q \cdot (q^{-1} \; mod \; p) \cdot q \right) \; mod \; (p \cdot q) \\
+C^d \bmod n & = (a_1t_1M_1 + a_2t_2M_2) \bmod M \\
+& = \left(C^d \bmod p \cdot (q^{-1} \bmod p) \cdot q + C^d \bmod q \cdot (p^{-1} \bmod q) \cdot p \right) \bmod (p \cdot q) \\
+& = \left(C^{d \bmod \phi(p)} \bmod p \cdot (p^{-1} \bmod q) \cdot p + C^{d \bmod \phi(q)} \bmod q \cdot (q^{-1} \bmod p) \cdot q \right) \bmod (p \cdot q) \\
 \end{align}
 $$
 
 其中可以提前计算的部分有
 
 $$
-X_p = q \cdot (q^{-1} \; mod \; p) \quad X_q = p \cdot (p^{-1} \; mod \; q) \\
-dP = d \; mod \; \phi(p) \quad dQ = d \; mod \; \phi(q) \\
+X_p = q \cdot (q^{-1} \bmod p) \quad X_q = p \cdot (p^{-1} \bmod q) \\
+dP = d \bmod \phi(p) \quad dQ = d \bmod \phi(q) \\
 $$
 
 则原式
-$$C^d \; mod \; n = (C^{dP} \cdot X_p + C^{dQ} \cdot X_q) \; mod \; (p \cdot q) \tag{4-2-1}$$
+$$C^d \bmod n = (C^{dP} \cdot X_p + C^{dQ} \cdot X_q) \bmod (p \cdot q) \tag{4-2-1}$$
 
 这里运用了求解中国剩余定理最为常见的一种方法，也被称为单基数转换法（Single Radix Conversion, SRC）。
 
@@ -242,13 +242,13 @@ $$x = v_1 + v_2 m_1 + v_3 m_1 m_2 + \ldots + v_n m_1 \ldots m_{n-1}$$
 具体来说，$v_1$代表了$x$数值中模$m_1$的部分（很显然随后的项中都含有$m_1$，即都能被$m_1$整除），同理$v_2$?负责除$v_1$外余项模$m_2$的内容，根据模运算加法性质以此类推将整个方程组展开。或者可以理解为这个多项式中每项的系数$v_x$都是对应模意义下的向量，$x$就由各个向量构成。具体的分解运算如下
 
 首先定义$r_{ij}$表示$m_i$模$m_j$的逆元
-$$r_{ij} = m_i^{-1} \; mod \; m_j$$
+$$r_{ij} = m_i^{-1} \bmod m_j$$
 可以列出原式的一项式
 
-$$a_1 = v_1 = x \; mod \; m_1$$
+$$a_1 = v_1 = x \bmod m_1$$
 
 同理在二项式时，可以计算得到$v_2$
-$$a_2 = v_1 + v_2 m_1 = x \; mod \; m_2$$
+$$a_2 = v_1 + v_2 m_1 = x \bmod m_2$$
 $$
 \begin{array}{rclr}
 a_2 - v_1 & \equiv& v_2 m_1 &\pmod {m_2} \\
@@ -256,49 +256,49 @@ a_2 - v_1 & \equiv& v_2 m_1 &\pmod {m_2} \\
 (a_2 - v_1)r_{12} & \equiv& v_2 &\pmod {m_2} \\
 \end{array}
 $$
-$$v_2 = ((a_2 - v_1)r_{12}) \; mod \; m_2$$
+$$v_2 = ((a_2 - v_1)r_{12}) \bmod m_2$$
 
 三项式时则有
-$$a_3 = v_1 + v_2 m_1 + v_3 m_1 m_2 = x \; mod \; m_3$$
-$$v_3 = (((a_3 - v_1)r_{13} - v_2)r_{23}) \; mod \; m_3$$
+$$a_3 = v_1 + v_2 m_1 + v_3 m_1 m_2 = x \bmod m_3$$
+$$v_3 = (((a_3 - v_1)r_{13} - v_2)r_{23}) \bmod m_3$$
 
 对于一个由n组同余方程展开的n项式，第n项的值可以由前n-1项确定。
 
 在RSA解密中，MMRC应用即带入二项式运算，有
 $$
 \begin{align}
-C^d \; mod \; n &= v_1 + v_2 p \\
-&= C^d \; mod \; p + \left(\left(\left(C^d \; mod \; q - C^d \; mod \; p\right) \cdot (p^{-1} \; mod \; q)\right) \; mod \; q \right) \cdot p \\
-&= C^{d \; mod \; \phi(p)} \; mod \; p + \left(\left(\left(C^{d \; mod \; \phi(q)} \; mod \; q - C^{d \; mod \; \phi(p)} \; mod \; p\right) \cdot \left(p^{-1} \; mod \; q \right)\right) \; mod \; q \right) \cdot p
+C^d \bmod n &= v_1 + v_2 p \\
+&= C^d \bmod p + \left(\left(\left(C^d \bmod q - C^d \bmod p\right) \cdot (p^{-1} \bmod q)\right) \bmod q \right) \cdot p \\
+&= C^{d \bmod \phi(p)} \bmod p + \left(\left(\left(C^{d \bmod \phi(q)} \bmod q - C^{d \bmod \phi(p)} \bmod p\right) \cdot \left(p^{-1} \bmod q \right)\right) \bmod q \right) \cdot p
 \end{align}
 $$
 其中可以提前计算的部分有
 $$
-dP = d \; mod \; \phi(p) \quad dQ = d \; mod \; \phi(q) \\
-pInv = p^{-1} \; mod \; q
+dP = d \bmod \phi(p) \quad dQ = d \bmod \phi(q) \\
+pInv = p^{-1} \bmod q
 $$
 
 则原式
-$$C^d \; mod \; n = C^{dP} \; mod \; p + \left(\left(\left(C^{dQ} \; mod \; q - C^{dP} \; mod \; p\right) \cdot pInv \right) \; mod \; q\right) \cdot p \tag{4-2-2}\label{4-2-2}$$
+$$C^d \bmod n = C^{dP} \bmod p + \left(\left(\left(C^{dQ} \bmod q - C^{dP} \bmod p\right) \cdot pInv \right) \bmod q\right) \cdot p \tag{4-2-2}\label{4-2-2}$$
 
 一般更友善的表达为（Garner's formula）
 $$
 \begin{align}
-&m_1 = C^{dP} \; mod \; p \\
-&m_2 = C^{dQ} \; mod \; q \\
-&M = m_1 + (pInv \cdot (m_2 - m_1) \; mod \; q) \cdot p
+&m_1 = C^{dP} \bmod p \\
+&m_2 = C^{dQ} \bmod q \\
+&M = m_1 + (pInv \cdot (m_2 - m_1) \bmod q) \cdot p
 \end{align}
 $$
 
 不过在实际运用中，如OpenSSL使用的表达式为
 $$
 \begin{align}
-&qInv = q^{-1} \; mod \; p \\
-&M = m_2 + (qInv \cdot (m_1 - m_2) \; mod \; p) \cdot q \tag{4-2-3}\label{4-2-3}
+&qInv = q^{-1} \bmod p \\
+&M = m_2 + (qInv \cdot (m_1 - m_2) \bmod p) \cdot q \tag{4-2-3}\label{4-2-3}
 \end{align}
 $$
 
->注：${\eqref{4-2-3}}$式的来源很简单，将MMRC的二项式写成$C^d \; mod \; n = v_1 q + v_2$展开即可，但是这么做的目的是什么暂时没有找到比较详细的说明，但是根据我的一些实验，以及对PEM格式的RSA私钥做解析，发现素数$p$都是大于$q$的，一个猜测是构造$m_1 - m_2$有的更大的概率为正整数？
+>注：${\eqref{4-2-3}}$式的来源很简单，将MMRC的二项式写成$C^d \bmod n = v_1 q + v_2$展开即可，但是这么做的目的是什么暂时没有找到比较详细的说明，但是根据我的一些实验，以及对PEM格式的RSA私钥做解析，发现素数$p$都是大于$q$的，一个猜测是构造$m_1 - m_2$有的更大的概率为正整数？
 这个问题有待考证，先抛出来吧。
 
 
