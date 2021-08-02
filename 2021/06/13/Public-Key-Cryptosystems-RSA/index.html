@@ -88,7 +88,7 @@
 <meta property="og:description" content="多年以后，面对ssl中奔流不息的数据时，我可能仍会想起在11教第一次听董荣胜说起非对称加密的那个飘着桂花味的下午。那时五教和B区之间的荒地才被烧过没多久，围墙还没拆，综合楼和新足球场也没建起来。我还是一个会认真到在图书馆找资料手算反码和补码的大一新生，下课后带着一个手抓饼回宿舍做了几道以3 7 9 11之类的小素数计算验证RSA加解密过程的课后练习，一切都很新鲜，一切似乎才刚刚开始。">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://ftp.bmp.ovh/imgs/2021/07/fa4e651545e73287.png">
-<meta property="og:updated_time" content="2021-08-01T08:02:39.649Z">
+<meta property="og:updated_time" content="2021-08-02T15:56:31.200Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="公钥密码学-RSA">
 <meta name="twitter:description" content="多年以后，面对ssl中奔流不息的数据时，我可能仍会想起在11教第一次听董荣胜说起非对称加密的那个飘着桂花味的下午。那时五教和B区之间的荒地才被烧过没多久，围墙还没拆，综合楼和新足球场也没建起来。我还是一个会认真到在图书馆找资料手算反码和补码的大一新生，下课后带着一个手抓饼回宿舍做了几道以3 7 9 11之类的小素数计算验证RSA加解密过程的课后练习，一切都很新鲜，一切似乎才刚刚开始。">
@@ -387,7 +387,7 @@
 <p>除了最基本的传递秘密消息之外，更进一步，单向陷门置换有个更加令人激动的应用场景就是数字签名。正如签名的含义，通过个人独特的笔迹来判断信息是否来源于对应的发送方。如果说加密保证了数据的保密性，那么数字签名就提供了不可篡改性与不可抵赖性。即一方将消息使用仅自己知道的过程D处理后公布，其余所有人都能用公开的过程E还原出原始消息，并且这个消息一定是由过程E所属的发送方发出。实际使用中一般是公布方对消息的摘要值做签名，随着消息明文一并公布；接收方经过程E处理得到摘要值，并使用同样的摘要算法对消息明文计算，对比两边的结果判断这份信息是否可靠。</p>
 <p>最后在具体聊RSA之前我想插一个关于密码的思考，例如古典密码中的代替技术最典型代表凯撒密码。当然这并不一定值得推广，只是提一下我自己脑海中的一个概念。我一直倾向将这类密码近似地理解为一次函数，即$f(x)=kx+b$。对于这类单调的加密过程，很容易通过已知明文还原$x$：令$m=f(x)$, 有$x=\frac{m-b}{k}$。更进一步说，古典密码追求的极致是无限接近$f(x)=b$且有办法还原$x$，消除代替中遗留的语义统计特征，当然不同的语言系统中使用的文字符号及其组合方式会直接影响密码体系中信息熵的变化，这又是另一个话题。但还是要强调这只是我自己的一个直觉性思考方式，将具象的加密操作抽象成为符号语言，或者转化成几何的角度来看待问题，称不上准确。</p>
 <h3 id="RSA与数论基础"><a href="#RSA与数论基础" class="headerlink" title="RSA与数论基础"></a>RSA与数论基础</h3><p>之前和朋友们瞎比聊过这帮数学怪们到底怎么发明出这些诡异的算法，大致结论是最终呈现在大家眼前的已经是精华中的精华，他们需要深刻地掌握和运用足够多的基础理论知识来形成对应问题的体系框架，通过经验也好，灵感也罢，甚至远在星辰之外的一丝运气，才在无尽的数学花园中采到了一些看起来合适的原料，不断加工组合验证推导，花费数年、数十年，甚至终其一生扑在一个问题中。没有写下Q.E.D之前四周都是迷雾。我们学习这些理论时，所有正确的原料早已明确，重复一个过程谈不上困难，尽量在经历这个过程中领悟一些东西吧。</p>
-<h4 id="算法设计"><a href="#算法设计" class="headerlink" title="算法设计"></a>算法设计</h4><p>RSA的设计遵循了单向陷门置换，算法本质是大素数分解的计算困难性。并巧妙地借助了模运算来还原明文，通过幂运算隐藏参与通信双方的秘密。虽然不知道Diffile和Hellman是怎么想到了构造幂模运算(RSA paper中的 &quot;The aforementioned method should not be confused with the “exponentiation” technique presented by Diffie and Hellman [1] to solve the key distribution problem&quot;)，但我猜同余是个很抓眼球的特性，结合费马小定理看底数和模余数在特定条件下有机会相等，很值得用在这种密码体系的解密中。总之顺着算法思路，可以考虑如下设计:<br>$f(x) \; mod \; n = x，f(x)=x^a$，令其中a包含两个密钥相关的内容{e, d}，得到计算式 $(M^e \; mod \; n)^d \; mod \; n = M$<br>到这里已经有一个隐约的概念，将消息M做幂运算后取模，就算余数和模数被公开也无法得知原消息M，而参与运算的指数{e, d}经过了精心挑选，能够使用余数的幂做模运算还原消息M。这个过程的正确性就由数论中的几个经典问题支撑。</p>
+<h4 id="算法设计"><a href="#算法设计" class="headerlink" title="算法设计"></a>算法设计</h4><p>RSA的设计遵循了单向陷门置换，算法本质是大素数分解的计算困难性。并巧妙地借助了模运算来还原明文，通过幂运算隐藏参与通信双方的秘密。虽然不知道Diffile和Hellman是怎么想到了构造幂模运算(RSA paper中的 &quot;The aforementioned method should not be confused with the “exponentiation” technique presented by Diffie and Hellman [1] to solve the key distribution problem&quot;)，但我猜同余是个很抓眼球的特性，结合费马小定理看底数和模余数在特定条件下有机会相等，很值得用在这种密码体系的解密中。总之顺着算法思路，可以考虑如下设计:<br>$f(x) \bmod n = x，f(x)=x^a$，令其中a包含两个密钥相关的内容{e, d}，得到计算式 $(M^e \bmod n)^d \bmod n = M$<br>到这里已经有一个隐约的概念，将消息M做幂运算后取模，就算余数和模数被公开也无法得知原消息M，而参与运算的指数{e, d}经过了精心挑选，能够使用余数的幂做模运算还原消息M。这个过程的正确性就由数论中的几个经典问题支撑。</p>
 <p>一般教材会计划提前一章学习一些数论知识，有的学校在给信息安全专业制定培养计划时会专门安排专业数学基础课程。其实最初我的打算是写公式时加入相关定理的证明过程，以此来充实整个理论推导过程，但是写着写着发现太<sup>TM</sup>不流畅了，看公式体验真滴差。最后决定先只对RSA Paper稍微补充少量中间步骤，毕竟原论文也是真滴简洁，便于在一定数论基础上的理解。这篇文章并不是科普数论基础，但我认为也有的地方值得多说几句，就写在本章的证明之后。</p>
 <p><center>draft && paper</center><img src="https://ftp.bmp.ovh/imgs/2021/07/fa4e651545e73287.png" alt="math_draft_paper"></p>
 <h4 id="相关定理及公式"><a href="#相关定理及公式" class="headerlink" title="相关定理及公式"></a>相关定理及公式</h4><p>那么来康康完成这个设计自己手上有多少牌可以打。</p>
@@ -400,18 +400,18 @@
   x \equiv a_2 \pmod {m_2} & \\
   \quad \vdots & \\
   x \equiv a_n \pmod {m_n} & \\
-  \end{cases}</script>  增加如下定义：<br>  $M = \prod_{i=1}^n m_i$ 表示所有模数的乘积<br>  $M_i = \frac{M} {m_i}$ 表示除当前外$n-1$个模数的乘积<br>  $t_i = {M_i}^{-1} \Longleftrightarrow M_it_i \equiv 1 \pmod {m_i}$ 表示$M_i$的模乘法逆元<br>  则方程组有通解为<script type="math/tex; mode=display">x = a_1t_1M_1 + a_2t_2M_2 + \cdots + a_nt_nM_n + kM = \sum_{i=1}^n{a_it_iM_i} + kM, \quad k\in \mathbb{Z}</script>  其中，在模$M$意义下有唯一解<script type="math/tex; mode=display">x = \left(\sum_{i=1}^n{a_it_iM_i}\right) \; mod \; M</script></li>
+  \end{cases}</script>  增加如下定义：<br>  $M = \prod_{i=1}^n m_i$ 表示所有模数的乘积<br>  $M_i = \frac{M} {m_i}$ 表示除当前外$n-1$个模数的乘积<br>  $t_i = {M_i}^{-1} \Longleftrightarrow M_it_i \equiv 1 \pmod {m_i}$ 表示$M_i$的模乘法逆元<br>  则方程组有通解为<script type="math/tex; mode=display">x = a_1t_1M_1 + a_2t_2M_2 + \cdots + a_nt_nM_n + kM = \sum_{i=1}^n{a_it_iM_i} + kM, \quad k\in \mathbb{Z}</script>  其中，在模$M$意义下有唯一解<script type="math/tex; mode=display">x = \left(\sum_{i=1}^n{a_it_iM_i}\right) \bmod M</script></li>
 <li>模运算及幂运算的一些计算性质</li>
 </ul>
 <h4 id="正确性证明"><a href="#正确性证明" class="headerlink" title="正确性证明"></a>正确性证明</h4><p>算法的安全基础在于素因数分解的计算困难性，那么至少需要存在两个素数，记为p与q，将p与q的乘积记为n。将消息记为M，用于指代M的数字取值范围为(0, n-1]。</p>
 <script type="math/tex; mode=display">n=p \cdot q</script><p>要利用同余，模数必然要公开，结合欧拉定理当M与n互素时，有$M^{\phi(n)} \equiv 1 \pmod n$，欧拉定理在RSA中起到了很重要的作用，不过现在离终点还很远，需要往里边加点料。在这里可以先猜想一个更理想的算式表达形式：$M^{\phi(n)+1} \equiv M \pmod n$。<br>$\phi(n)$是一个很关键的因素，有必要在附录中给出一些证明过程，这里先直接给结论。由于p和q选择了素数，则有</p>
 <script type="math/tex; mode=display">\phi(n) = \phi(p \cdot q) = \phi(p)\cdot\phi(q) = (p-1)(q-1)</script><p>回过头来看一眼想要的结果</p>
-<script type="math/tex; mode=display">(M^e \; mod \; n)^d \; mod \; n = M</script><p>如果用抽象代数的方式来表达会非常简洁，模映射是一种环同态，朴素点说呢，这是个这是个朴素的模运算分配律，幂运算可以表示连续的乘法运算，乘法运算可以表示连续的加法运算，所以there&#39;s a modular exponentiation property：</p>
-<script type="math/tex; mode=display">a^b \; mod \; c = (a \; mod \; c)^b \; mod \; c</script><p>于是可以把目标式可以写作</p>
-<script type="math/tex; mode=display">(M^e \; mod \; n)^d \; mod \; n = M^{ed} \; mod \; n</script><p>这个转换带来了$e$和$d$的乘积表达。且算法的终极目标是论证下式成立</p>
-<script type="math/tex; mode=display">M^{ed} \equiv M \pmod n</script><p>现在手握 $M^{\phi(n)} \equiv 1 \pmod n$ 与 $M^{ed} \; mod \; n$，可以考虑通过1来把 $ed$ 和 $\phi(n)$ 连上线。接下来是一个很关键的设计：随机挑选一个小于$\phi(n)$的大整数$d$，使$d$与$\phi(n)$互素，即</p>
+<script type="math/tex; mode=display">(M^e \bmod n)^d \bmod n = M</script><p>如果用抽象代数的方式来表达会非常简洁，模映射是一种环同态，朴素点说呢，这是个这是个朴素的模运算分配律，幂运算可以表示连续的乘法运算，乘法运算可以表示连续的加法运算，所以there&#39;s a modular exponentiation property：</p>
+<script type="math/tex; mode=display">a^b \bmod c = (a \bmod c)^b \bmod c</script><p>于是可以把目标式可以写作</p>
+<script type="math/tex; mode=display">(M^e \bmod n)^d \bmod n = M^{ed} \bmod n</script><p>这个转换带来了$e$和$d$的乘积表达。且算法的终极目标是论证下式成立</p>
+<script type="math/tex; mode=display">M^{ed} \equiv M \pmod n</script><p>现在手握 $M^{\phi(n)} \equiv 1 \pmod n$ 与 $M^{ed} \bmod n$，可以考虑通过1来把 $ed$ 和 $\phi(n)$ 连上线。接下来是一个很关键的设计：随机挑选一个小于$\phi(n)$的大整数$d$，使$d$与$\phi(n)$互素，即</p>
 <script type="math/tex; mode=display">gcd(d, \phi(n)) = 1</script><p>有了这个就可以保证一定存在模乘法逆元，即一定存在$e$，使得</p>
-<script type="math/tex; mode=display">ed \equiv 1 \pmod {\phi(n)}</script><p>结合同余的性质，必定存在$k, k\in \mathbb{Z}$，使得$ed = k \phi(n) + 1$。这个时候不要再往欧拉定理里钻了，再钻就快到死胡同了，换个角度请出费马小定理和中国剩余定理。来看$M^{ed} \; mod \; p$ 与 $M^{ed} \; mod \; q$</p>
+<script type="math/tex; mode=display">ed \equiv 1 \pmod {\phi(n)}</script><p>结合同余的性质，必定存在$k, k\in \mathbb{Z}$，使得$ed = k \phi(n) + 1$。这个时候不要再往欧拉定理里钻了，再钻就快到死胡同了，换个角度请出费马小定理和中国剩余定理。来看$M^{ed} \bmod p$ 与 $M^{ed} \bmod q$</p>
 <script type="math/tex; mode=display">
 \begin{align}
 &\because ed = k \phi(n) + 1 \\
@@ -432,19 +432,19 @@
 <p>传递消息的保密性</p>
 <blockquote>
 <ol>
-<li>$会话请求方需要传递消息M，计算C = M^e \; mod \; n，将C发送给接收方$</li>
-<li>$接收方用自己的私钥解密C，计算M = C^d \; mod \; n$</li>
+<li>$会话请求方需要传递消息M，计算C = M^e \bmod n，将C发送给接收方$</li>
+<li>$接收方用自己的私钥解密C，计算M = C^d \bmod n$</li>
 </ol>
 </blockquote>
 <p>数字签名与验签</p>
 <blockquote>
 <ol>
-<li>$消息发布方需求公开消息M，计算S = M^d \; mod \; n，将签名S公开$</li>
-<li>$获取方用公钥对签名S验证，计算M = S^e \; mod \; n$</li>
+<li>$消息发布方需求公开消息M，计算S = M^d \bmod n，将签名S公开$</li>
+<li>$获取方用公钥对签名S验证，计算M = S^e \bmod n$</li>
 </ol>
 </blockquote>
-<p><strong>以下是对一些“易得，显然，不难证明，由上可知”的补充。</strong><br>对于模运算的分配率换个有意思的说法：女术士打桩机杰洛特每次需要用3个弱效突变诱发物合成1个突变诱发物，杰洛特有a个弱效突变诱发物，一波操作之后合成几次忘记了，总之还剩下1个弱效突变诱发物；跑图打了一圈孽鬼沼泽巫婆腐食魔之后又得到了b个弱效突变诱发物，又操作一波合成突变诱发物，最后刚好一个弱效突变诱发物都不剩。这和先有a个弱效突变诱发物再打b个弱效突变诱发物攒在一起合成突变诱发物没有区别。公式一下就是$(a \; mod \; c + b) \; mod \; c = (a + b) \; mod \; c$。多次重复这个过程就是乘法的模运算。而用3个突变诱发物合成1个强效突变诱发物，从弱效突变诱发物的角度看就是幂模。</p>
-<p>当我们看到形如$a \equiv b \pmod n$，需要理解$a$与$b$的绝对值是$n$的倍数，即a b之间形成了模运算下的相等，该式完整表达为$a \; mod \; n =  b \; mod \; n$，千万不要理解成$a \; mod \; n =  b$。在没有特别指明时，$a \; b \; n$ 之间应该是没有具体的大小关系，当然如果$a$和$b$都是正整数且都小于$n$，那么$a$与$b$数值相等。</p>
+<p><strong>以下是对一些“易得，显然，不难证明，由上可知”的补充。</strong><br>对于模运算的分配率换个有意思的说法：女术士打桩机杰洛特每次需要用3个弱效突变诱发物合成1个突变诱发物，杰洛特有a个弱效突变诱发物，一波操作之后合成几次忘记了，总之还剩下1个弱效突变诱发物；跑图打了一圈孽鬼沼泽巫婆腐食魔之后又得到了b个弱效突变诱发物，又操作一波合成突变诱发物，最后刚好一个弱效突变诱发物都不剩。这和先有a个弱效突变诱发物再打b个弱效突变诱发物攒在一起合成突变诱发物没有区别。公式一下就是$(a \bmod c + b) \bmod c = (a + b) \bmod c$。多次重复这个过程就是乘法的模运算。而用3个突变诱发物合成1个强效突变诱发物，从弱效突变诱发物的角度看就是幂模。</p>
+<p>当我们看到形如$a \equiv b \pmod n$，需要理解$a$与$b$的绝对值是$n$的倍数，即a b之间形成了模运算下的相等，该式完整表达为$a \bmod n =  b \bmod n$，千万不要理解成$a \bmod n =  b$。在没有特别指明时，$a \; b \; n$ 之间应该是没有具体的大小关系，当然如果$a$和$b$都是正整数且都小于$n$，那么$a$与$b$数值相等。</p>
 <p>RSA中用来指代明文消息的M是一个取值范围在0到n的正整数，这是中国剩余定理中提到的唯一解（特解）。中国剩余定理本质上是在求一元线性同余方程组的通解。通俗地说，给出互素的两个数p和q，p q的乘积n，对于正整数a小于n，a可以由a除以p的余数和a除以q的余数唯一确定。加密的消息要能够正确地被还原出来，就需要加以这个范围的限制，否则就只能得到通解。</p>
 <p>结合幂模运算，$ed \equiv 1 \pmod {\phi(n)}$是一个关键设计。如果算法满足单向陷门函数，就需要设计某个方法及其对应的逆方法。而满足单向陷门置换，相当于这个逆方法不能对参数的顺序做要求。RSA中选择以乘法的形式来构造D方法和E方法，而通过乘法逆元又可以将除法这个不可靠的逆运算转化为乘法运算，modular mutiplicative inverse满足了单向陷门置换的方法统一。保证乘法逆元有且唯一，则需满足$gcd(d, \phi(n)) = 1$，这个d就需要生成密钥对时去构造。</p>
 <p>对于$M^{ed} \equiv M \pmod p,  M^{ed} \equiv M \pmod q \Longrightarrow M^{ed} \equiv M \pmod n$，不妨这么来看：<br>令$a = M^{ed} - M$，上式表达的含义则可以转化为存在一个数a能够同时被p和q整除，那么a一定能被p和q的最小公倍数整除。而n是p和q最小公倍数与最大公约数的乘积，所以a一定能被n整除。既然推导了整除成立，在此基础上两边加相同的数显然同余成立。多说一句，单论推论成立p和q为正整数即可，模为素数是费马小定理的要求。但p和q互素是中国剩余定理中有且有唯一解的必要条件。</p>
@@ -452,7 +452,7 @@
 <p>针对RSA也有很多攻击方法，毕竟保密性、可靠性、完整性、不可篡改性哪一个挂逼都不安全，安全等级也各有区别。这里借着公钥参数e说一说低加密指数的相关攻击。</p>
 <h5 id="低加密指数攻击"><a href="#低加密指数攻击" class="headerlink" title="低加密指数攻击"></a>低加密指数攻击</h5><p>这种攻击很容易理解，甚至有一刹那间让我产生了“这就是专门为CTF而存在的攻击方法吧”的怀疑(°ー°〃)。简而言之如果生成公钥时选择了如3这样的小素数，由于n可能很大，那么在加密一些小数值的时候，例如5<sup>3</sup>=125，可能这个密文值还是会比n小，那么攻击者直接对加密后的值也就是125开三次根即可还原明文。</p>
 <h5 id="Hastad广播攻击"><a href="#Hastad广播攻击" class="headerlink" title="Hastad广播攻击"></a>Hastad广播攻击</h5><p>也被称为低加密指数广播攻击，结合RSA加密过程与中国剩余定理来理解。首先可以列出RSA加密过程cipher的表达式</p>
-<script type="math/tex; mode=display">C = M^e \; mod \; N</script><p>那么在一个网络中，如果发送方使用相同的公钥元素e对同一个消息M加密发给n个接收方，设公钥为$(e, N_i)$。有同余方程组</p>
+<script type="math/tex; mode=display">C = M^e \bmod N</script><p>那么在一个网络中，如果发送方使用相同的公钥元素e对同一个消息M加密发给n个接收方，设公钥为$(e, N_i)$。有同余方程组</p>
 <script type="math/tex; mode=display">
 \begin{cases}
 M^e \equiv C_1 \pmod {N_1} & \\
@@ -460,8 +460,8 @@ M^e \equiv C_2 \pmod {N_2} & \\
 \quad \vdots & \\
 M^e \equiv C_n \pmod {N_n} & \\
 \end{cases}</script><p>如果满足$gcd(N_i, N_j)=1$（p q是两个大素数，其实基本可以认定N之间极大概率是两两互素的），根据中国剩余定理，通过$C_i, N_i, C_j, N_j, \cdots$总能够在一个给定范围内得到$M^e$的确定值，设该值为$\mathbb{C}$。根据RSA算法设计，M一定小于N，可得如下条件</p>
-<script type="math/tex; mode=display">\mathbb{C} = M^e \tag{4-1-1}\label{4-1-1}</script><script type="math/tex; mode=display">\mathbb{C} \equiv C_i \pmod {N_i} \tag{4-1-2}\label{4-1-2}</script><script type="math/tex; mode=display">\mathbb{C} = \left(\sum_{i=1}^n{C_it_i\mathbb{N}_i}\right) \; mod \; \mathbb{N} \tag{4-1-3}\label{4-1-3}</script><script type="math/tex; mode=display">M < N_i \quad \forall i | i \in \mathbb{Z},i \leq e \tag{4-1-4}\label{4-1-4}</script><p><em>注意在${\eqref{4-1-3}}$式中使用的$\mathbb{N}$需要结合CRT的语境来理解，并不是指公钥参数$(e, N_i)$中的$N$。这里不赘述，参考<strong>相关定理及公式</strong>章节<strong>中国剩余定理</strong>内容。</em><br>根据上述的四个表达式，如果想要确定唯一的$\mathbb{C}$，由${\eqref{4-1-3}}$可知首先要确定模数$\mathbb{N}$的组成。结合等式${\eqref{4-1-1}}$与不等式${\eqref{4-1-4}}$可知$\mathbb{C}$一定小于任意$e$个模数$N$的乘积。作为攻击方在网络中获取发送方至少$e$条数据后，则很容易根据公开信息计算出明文$M$</p>
-<script type="math/tex; mode=display">M = \sqrt[e]{\left(\sum_{i=1}^e{C_it_i\mathbb{N}_i}\right)\; mod \;\left(\prod_{i=1}^e{N_i}\right)}</script><p>顺便澄清网上的谣言啊，都是抄来抄去不过脑子，说因为$e$太小容易计算所以不安全，👴🏻笑了，以现代计算机的视角3和65537在计算复杂度上几乎没有区别。根本原因是对于小指数$e$而言，获取这个数量的ciphertext相对更容易，攻击者就更容易确定$M$的特解。其实解决这两种攻击漏洞的办法并不是增大$e$的值，而是将$M$编码成对于整个加密体系而言更安全的数值，例如RSA_PKCS1_PADDING，RSA_PKCS1_OAEP_PADDING等。</p>
+<script type="math/tex; mode=display">\mathbb{C} = M^e \tag{4-1-1}\label{4-1-1}</script><script type="math/tex; mode=display">\mathbb{C} \equiv C_i \pmod {N_i} \tag{4-1-2}\label{4-1-2}</script><script type="math/tex; mode=display">\mathbb{C} = \left(\sum_{i=1}^n{C_it_i\mathbb{N}_i}\right) \bmod \mathbb{N} \tag{4-1-3}\label{4-1-3}</script><script type="math/tex; mode=display">M < N_i \quad \forall i | i \in \mathbb{Z},i \leq e \tag{4-1-4}\label{4-1-4}</script><p><em>注意在${\eqref{4-1-3}}$式中使用的$\mathbb{N}$需要结合CRT的语境来理解，并不是指公钥参数$(e, N_i)$中的$N$。这里不赘述，参考<strong>相关定理及公式</strong>章节<strong>中国剩余定理</strong>内容。</em><br>根据上述的四个表达式，如果想要确定唯一的$\mathbb{C}$，由${\eqref{4-1-3}}$可知首先要确定模数$\mathbb{N}$的组成。结合等式${\eqref{4-1-1}}$与不等式${\eqref{4-1-4}}$可知$\mathbb{C}$一定小于任意$e$个模数$N$的乘积。作为攻击方在网络中获取发送方至少$e$条数据后，则很容易根据公开信息计算出明文$M$</p>
+<script type="math/tex; mode=display">M = \sqrt[e]{\left(\sum_{i=1}^e{C_it_i\mathbb{N}_i}\right)\bmod\left(\prod_{i=1}^e{N_i}\right)}</script><p>顺便澄清网上的谣言啊，都是抄来抄去不过脑子，说因为$e$太小容易计算所以不安全，👴🏻笑了，以现代计算机的视角3和65537在计算复杂度上几乎没有区别。根本原因是对于小指数$e$而言，获取这个数量的ciphertext相对更容易，攻击者就更容易确定$M$的特解。其实解决这两种攻击漏洞的办法并不是增大$e$的值，而是将$M$编码成对于整个加密体系而言更安全的数值，例如RSA_PKCS1_PADDING，RSA_PKCS1_OAEP_PADDING等。</p>
 <h4 id="中国剩余定理的特殊场景"><a href="#中国剩余定理的特殊场景" class="headerlink" title="中国剩余定理的特殊场景"></a>中国剩余定理的特殊场景</h4><p>由于公钥参数$e$选择了一个较小值，相对的解密过程做$d$的幂运算量就特别大，如何把解密搞快点是一个值得讨论的问题。在之前描述中国剩余定理的同余方程组可知，一个整数能够通过以下方式转换为由两两间互素的模数与余数的表达</p>
 <script type="math/tex; mode=display">
 \begin{cases}
@@ -483,14 +483,14 @@ C^d \equiv a_2 \pmod q
 <p>综上得到第一种优化的解密算法</p>
 <script type="math/tex; mode=display">
 \begin{align}
-C^d \; mod \; n & = (a_1t_1M_1 + a_2t_2M_2) \; mod \; M \\
-& = \left(C^d \; mod \; p \cdot (q^{-1} \; mod \; p) \cdot q + C^d \; mod \; q \cdot (p^{-1} \; mod \; q) \cdot p \right) \; mod \; (p \cdot q) \\
-& = \left(C^{d \; mod \; \phi(p)} \; mod \; p \cdot (p^{-1} \; mod \; q) \cdot p + C^{d \; mod \; \phi(q)} \; mod \; q \cdot (q^{-1} \; mod \; p) \cdot q \right) \; mod \; (p \cdot q) \\
+C^d \bmod n & = (a_1t_1M_1 + a_2t_2M_2) \bmod M \\
+& = \left(C^d \bmod p \cdot (q^{-1} \bmod p) \cdot q + C^d \bmod q \cdot (p^{-1} \bmod q) \cdot p \right) \bmod (p \cdot q) \\
+& = \left(C^{d \bmod \phi(p)} \bmod p \cdot (p^{-1} \bmod q) \cdot p + C^{d \bmod \phi(q)} \bmod q \cdot (q^{-1} \bmod p) \cdot q \right) \bmod (p \cdot q) \\
 \end{align}</script><p>其中可以提前计算的部分有</p>
 <script type="math/tex; mode=display">
-X_p = q \cdot (q^{-1} \; mod \; p) \quad X_q = p \cdot (p^{-1} \; mod \; q) \\
-dP = d \; mod \; \phi(p) \quad dQ = d \; mod \; \phi(q) \\</script><p>则原式</p>
-<script type="math/tex; mode=display">C^d \; mod \; n = (C^{dP} \cdot X_p + C^{dQ} \cdot X_q) \; mod \; (p \cdot q) \tag{4-2-1}</script><p>这里运用了求解中国剩余定理最为常见的一种方法，也被称为单基数转换法（Single Radix Conversion, SRC）。</p>
+X_p = q \cdot (q^{-1} \bmod p) \quad X_q = p \cdot (p^{-1} \bmod q) \\
+dP = d \bmod \phi(p) \quad dQ = d \bmod \phi(q) \\</script><p>则原式</p>
+<script type="math/tex; mode=display">C^d \bmod n = (C^{dP} \cdot X_p + C^{dQ} \cdot X_q) \bmod (p \cdot q) \tag{4-2-1}</script><p>这里运用了求解中国剩余定理最为常见的一种方法，也被称为单基数转换法（Single Radix Conversion, SRC）。</p>
 <p>除SRC外，优化混合基数转换（Modified Mixed Radix Conversion, MMRC）是目前应用更为广泛的方法，其基本思想是对模余数逐级逼近，引用前章中介绍中国剩余定理的一元线性同余方程组</p>
 <script type="math/tex; mode=display">
 \begin{align}
@@ -501,38 +501,38 @@ x &\equiv a_n \pmod {m_n} \\
 \end{align}</script><p>同样，设$M = \prod_{i=1}^n{m_i}$且$m_i$之间两两互素。<br>现在需要寻求一种表达方法，让小于$M$的正整数$x$由$x$模$m_i$的余数组成。即通过模余数来直接构造唯一解，表达为下式</p>
 <script type="math/tex; mode=display">x = v_1 + v_2 m_1 + v_3 m_1 m_2 + \ldots + v_n m_1 \ldots m_{n-1}</script><p>具体来说，$v_1$代表了$x$数值中模$m_1$的部分（很显然随后的项中都含有$m_1$，即都能被$m_1$整除），同理$v_2$?负责除$v_1$外余项模$m_2$的内容，根据模运算加法性质以此类推将整个方程组展开。或者可以理解为这个多项式中每项的系数$v_x$都是对应模意义下的向量，$x$就由各个向量构成。具体的分解运算如下</p>
 <p>首先定义$r_{ij}$表示$m_i$模$m_j$的逆元</p>
-<script type="math/tex; mode=display">r_{ij} = m_i^{-1} \; mod \; m_j</script><p>可以列出原式的一项式</p>
-<script type="math/tex; mode=display">a_1 = v_1 = x \; mod \; m_1</script><p>同理在二项式时，可以计算得到$v_2$</p>
-<script type="math/tex; mode=display">a_2 = v_1 + v_2 m_1 = x \; mod \; m_2</script><script type="math/tex; mode=display">
+<script type="math/tex; mode=display">r_{ij} = m_i^{-1} \bmod m_j</script><p>可以列出原式的一项式</p>
+<script type="math/tex; mode=display">a_1 = v_1 = x \bmod m_1</script><p>同理在二项式时，可以计算得到$v_2$</p>
+<script type="math/tex; mode=display">a_2 = v_1 + v_2 m_1 = x \bmod m_2</script><script type="math/tex; mode=display">
 \begin{array}{rclr}
 a_2 - v_1 & \equiv& v_2 m_1 &\pmod {m_2} \\
 (a_2 - v_1)m_1^{-1} & \equiv& v_2 m_1 m_1^{-1} &\pmod {m_2} \\
 (a_2 - v_1)r_{12} & \equiv& v_2 &\pmod {m_2} \\
-\end{array}</script><script type="math/tex; mode=display">v_2 = ((a_2 - v_1)r_{12}) \; mod \; m_2</script><p>三项式时则有</p>
-<script type="math/tex; mode=display">a_3 = v_1 + v_2 m_1 + v_3 m_1 m_2 = x \; mod \; m_3</script><script type="math/tex; mode=display">v_3 = (((a_3 - v_1)r_{13} - v_2)r_{23}) \; mod \; m_3</script><p>对于一个由n组同余方程展开的n项式，第n项的值可以由前n-1项确定。</p>
+\end{array}</script><script type="math/tex; mode=display">v_2 = ((a_2 - v_1)r_{12}) \bmod m_2</script><p>三项式时则有</p>
+<script type="math/tex; mode=display">a_3 = v_1 + v_2 m_1 + v_3 m_1 m_2 = x \bmod m_3</script><script type="math/tex; mode=display">v_3 = (((a_3 - v_1)r_{13} - v_2)r_{23}) \bmod m_3</script><p>对于一个由n组同余方程展开的n项式，第n项的值可以由前n-1项确定。</p>
 <p>在RSA解密中，MMRC应用即带入二项式运算，有</p>
 <script type="math/tex; mode=display">
 \begin{align}
-C^d \; mod \; n &= v_1 + v_2 p \\
-&= C^d \; mod \; p + \left(\left(\left(C^d \; mod \; q - C^d \; mod \; p\right) \cdot (p^{-1} \; mod \; q)\right) \; mod \; q \right) \cdot p \\
-&= C^{d \; mod \; \phi(p)} \; mod \; p + \left(\left(\left(C^{d \; mod \; \phi(q)} \; mod \; q - C^{d \; mod \; \phi(p)} \; mod \; p\right) \cdot \left(p^{-1} \; mod \; q \right)\right) \; mod \; q \right) \cdot p
+C^d \bmod n &= v_1 + v_2 p \\
+&= C^d \bmod p + \left(\left(\left(C^d \bmod q - C^d \bmod p\right) \cdot (p^{-1} \bmod q)\right) \bmod q \right) \cdot p \\
+&= C^{d \bmod \phi(p)} \bmod p + \left(\left(\left(C^{d \bmod \phi(q)} \bmod q - C^{d \bmod \phi(p)} \bmod p\right) \cdot \left(p^{-1} \bmod q \right)\right) \bmod q \right) \cdot p
 \end{align}</script><p>其中可以提前计算的部分有</p>
 <script type="math/tex; mode=display">
-dP = d \; mod \; \phi(p) \quad dQ = d \; mod \; \phi(q) \\
-pInv = p^{-1} \; mod \; q</script><p>则原式</p>
-<script type="math/tex; mode=display">C^d \; mod \; n = C^{dP} \; mod \; p + \left(\left(\left(C^{dQ} \; mod \; q - C^{dP} \; mod \; p\right) \cdot pInv \right) \; mod \; q\right) \cdot p \tag{4-2-2}\label{4-2-2}</script><p>一般更友善的表达为（Garner&#39;s formula）</p>
+dP = d \bmod \phi(p) \quad dQ = d \bmod \phi(q) \\
+pInv = p^{-1} \bmod q</script><p>则原式</p>
+<script type="math/tex; mode=display">C^d \bmod n = C^{dP} \bmod p + \left(\left(\left(C^{dQ} \bmod q - C^{dP} \bmod p\right) \cdot pInv \right) \bmod q\right) \cdot p \tag{4-2-2}\label{4-2-2}</script><p>一般更友善的表达为（Garner&#39;s formula）</p>
 <script type="math/tex; mode=display">
 \begin{align}
-&m_1 = C^{dP} \; mod \; p \\
-&m_2 = C^{dQ} \; mod \; q \\
-&M = m_1 + (pInv \cdot (m_2 - m_1) \; mod \; q) \cdot p
+&m_1 = C^{dP} \bmod p \\
+&m_2 = C^{dQ} \bmod q \\
+&M = m_1 + (pInv \cdot (m_2 - m_1) \bmod q) \cdot p
 \end{align}</script><p>不过在实际运用中，如OpenSSL使用的表达式为</p>
 <script type="math/tex; mode=display">
 \begin{align}
-&qInv = q^{-1} \; mod \; p \\
-&M = m_2 + (qInv \cdot (m_1 - m_2) \; mod \; p) \cdot q \tag{4-2-3}\label{4-2-3}
+&qInv = q^{-1} \bmod p \\
+&M = m_2 + (qInv \cdot (m_1 - m_2) \bmod p) \cdot q \tag{4-2-3}\label{4-2-3}
 \end{align}</script><blockquote>
-<p>注：${\eqref{4-2-3}}$式的来源很简单，将MMRC的二项式写成$C^d \; mod \; n = v_1 q + v_2$展开即可，但是这么做的目的是什么暂时没有找到比较详细的说明，但是根据我的一些实验，以及对PEM格式的RSA私钥做解析，发现素数$p$都是大于$q$的，一个猜测是构造$m_1 - m_2$有的更大的概率为正整数？<br>这个问题有待考证，先抛出来吧。</p>
+<p>注：${\eqref{4-2-3}}$式的来源很简单，将MMRC的二项式写成$C^d \bmod n = v_1 q + v_2$展开即可，但是这么做的目的是什么暂时没有找到比较详细的说明，但是根据我的一些实验，以及对PEM格式的RSA私钥做解析，发现素数$p$都是大于$q$的，一个猜测是构造$m_1 - m_2$有的更大的概率为正整数？<br>这个问题有待考证，先抛出来吧。</p>
 </blockquote>
 <p>以上就是OpenSSL中抽象RSA数据结构实现rsa_st结构体成员dmp1, dmq1, iqmp的来源<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rsa_st</span> &#123;</span></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * #legacy</span></span><br><span class="line"><span class="comment">     * The first field is used to pickup errors where this is passed</span></span><br><span class="line"><span class="comment">     * instead of an EVP_PKEY.  It is always zero.</span></span><br><span class="line"><span class="comment">     * THIS MUST REMAIN THE FIRST FIELD.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">int</span> dummy_zero;</span><br><span class="line"></span><br><span class="line">    OSSL_LIB_CTX *libctx;</span><br><span class="line">    <span class="keyword">int32_t</span> version;</span><br><span class="line">    <span class="keyword">const</span> RSA_METHOD *meth;</span><br><span class="line">    <span class="comment">/* functional reference if 'meth' is ENGINE-provided */</span></span><br><span class="line">    ENGINE *engine;</span><br><span class="line">    BIGNUM *n;</span><br><span class="line">    BIGNUM *e;</span><br><span class="line">    BIGNUM *d;</span><br><span class="line">    BIGNUM *p;</span><br><span class="line">    BIGNUM *q;</span><br><span class="line">    <span class="comment">//---------------------------------------------------</span></span><br><span class="line">    BIGNUM *dmp1;	<span class="comment">// d mod (p - 1)</span></span><br><span class="line">    BIGNUM *dmq1;	<span class="comment">// d mod (q - 1)</span></span><br><span class="line">    BIGNUM *iqmp;	<span class="comment">// q inverse mod p</span></span><br><span class="line">    <span class="comment">//---------------------------------------------------</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * If a PSS only key this contains the parameter restrictions.</span></span><br><span class="line"><span class="comment">     * There are two structures for the same thing, used in different cases.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="comment">/* This is used uniquely by OpenSSL provider implementations. */</span></span><br><span class="line">    RSA_PSS_PARAMS_30 pss_params;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(FIPS_MODULE) &amp;&amp; !defined(OPENSSL_NO_ACVP_TESTS)</span></span><br><span class="line">    RSA_ACVP_TEST *acvp_test;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> FIPS_MODULE</span></span><br><span class="line">    <span class="comment">/* This is used uniquely by rsa_ameth.c and rsa_pmeth.c. */</span></span><br><span class="line">    RSA_PSS_PARAMS *pss;</span><br><span class="line">    <span class="comment">/* for multi-prime RSA, defined in RFC 8017 */</span></span><br><span class="line">    STACK_OF(RSA_PRIME_INFO) *prime_infos;</span><br><span class="line">    <span class="comment">/* Be careful using this if the RSA structure is shared */</span></span><br><span class="line">    CRYPTO_EX_DATA ex_data;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    CRYPTO_REF_COUNT references;</span><br><span class="line">    <span class="keyword">int</span> flags;</span><br><span class="line">    <span class="comment">/* Used to cache montgomery values */</span></span><br><span class="line">    BN_MONT_CTX *_method_mod_n;</span><br><span class="line">    BN_MONT_CTX *_method_mod_p;</span><br><span class="line">    BN_MONT_CTX *_method_mod_q;</span><br><span class="line">    BN_BLINDING *blinding;</span><br><span class="line">    BN_BLINDING *mt_blinding;</span><br><span class="line">    CRYPTO_RWLOCK *lock;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> dirty_cnt;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
 <h3 id="Back-to-the-real-world"><a href="#Back-to-the-real-world" class="headerlink" title="Back to the real world"></a>Back to the real world</h3><p>终 于 到 了 我 第 二 喜 欢 的 代 码 环 节 来 点 真 实 的<br>这章主要是根据现在比较通用的密码体系对RSA相关内容做解析，至于自己写代码实现一个RSA计算过程，无非是些素性判定、扩展欧几里得、快速幂等等，大数运算是有些技巧的，解密应用MMRC应该能写个有点意思的递归吧。<del>但是要玩游戏所以时间不太够</del>不过这些大都已经有很标准的实现，所以就可以但没必要了 ∠(ᐛ」∠)＿</p>
