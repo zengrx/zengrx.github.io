@@ -78,7 +78,8 @@ theme: next
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://github.com/zengrx/zengrx.github.io
+    #repo: https://github.com/zengrx/zengrx.github.io
+  repo: git@github.com:zengrx/zengrx.github.io.git
   branch: master
 
 kramed:
