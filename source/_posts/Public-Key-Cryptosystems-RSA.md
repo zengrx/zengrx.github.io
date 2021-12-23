@@ -300,6 +300,8 @@ $$
 
 >注：${\eqref{4-2-3}}$式的来源很简单，将MMRC的二项式写成$C^d \bmod n = v_1 q + v_2$展开即可，但是这么做的目的是什么暂时没有找到比较详细的说明，但是根据我的一些实验，以及对PEM格式的RSA私钥做解析，发现素数$p$都是大于$q$的，一个猜测是构造$m_1 - m_2$有的更大的概率为正整数？
 这个问题有待考证，先抛出来吧。
+**211223 update**
+根据pkcs文档和一些网上的讨论<sup>[16][17]</sup>，因为p被定义大于q，在早期BIGNUM不支持负数表示的时候可以通过构造(m1 + p - m2)的式子来保证进行$\bmod$ p操作数一定是非负整数，因为m2是模q的余数，最大值为q - 1一定小于p。那么形如(m1 - m2)的式子就必然对应了$C^d \bmod n = v_1 q + v_2$二项式表达。
 
 
 以上就是OpenSSL中抽象RSA数据结构实现rsa_st结构体成员dmp1, dmq1, iqmp的来源
@@ -807,6 +809,7 @@ CA 54 28 37 89 4C E7 04 13 4F 4E A1 08 9C 18 C9 F1 F9 E6 AD ED A6 A2 4D C0 25 72
 
 ### 一些问题
 好像除了Garner's formula选取二项式的方式之外暂时没有别的问题。。
+*211223已更新
 
 ### 老套但必须存在的总结环节
 Cryptography Review系列在这两年多以来陆陆续续出了几篇文章，确实是温故知新。按照原本的计划就剩下椭圆曲线密码学的相关内容了。当然Diffle-Hellman和ElGamal密码体制要不要单独开一篇还没确定，以后也可能会继续补充消息认证码之类的内容（又挖新坑）。总之ECC肯定是接下来最主要的方向，开始之前我应该会把包括离散和抽代的知识再过一遍，这玩意一头扎进去就不知道什么时候能出来了，那就拖更一年吧  ─=≡(ง ᐛ )ว
@@ -828,6 +831,8 @@ Cryptography Review系列在这两年多以来陆陆续续出了几篇文章，�
 13. [Garner's Algorithm in CRT](https://cp-algorithms.com/algebra/chinese-remainder-theorem.html)
 14. [An Example of A Garner's Algorithm Calculation](https://www.csee.umbc.edu/~lomonaco/s08/441/handouts/Garner-Alg-Example.pdf)
 15. [openssl@github](https://github.com/openssl/openssl)
+16. [PKCS #1: RSA Cryptography Specifications Version 2.2](https://datatracker.ietf.org/doc/html/rfc8017#section-3.2)
+17. [RSA Algorithm](https://www.di-mgt.com.au/rsa_alg.html)
 
 ### 附录
 
