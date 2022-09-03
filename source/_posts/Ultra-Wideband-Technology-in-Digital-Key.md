@@ -1,0 +1,206 @@
+---
+title: UWB技术在数字钥匙中的应用
+date: 2022-07-30 23:58:12
+tags:
+- UWB
+- Digital Key
+- CarKey
+---
+
+![CarKey Arch](https://s3.bmp.ovh/imgs/2022/07/31/f686a5add511f63e.png)
+
+<!-- more -->
+
+## Once Upon a Time
+2019年初是研发数字钥匙1.0产品的尾声阶段，年前我也到了黑河做寒区实验，首款车型应该是当年3月份上的总装线。当时算法组的同事们罗列了未来可能应用到无钥匙产品线的一些新技术，基本是参考了主流的室内定位，例如蓝牙AOA、TOA、TDOA，以及今天的主角UWB。
+
+对于蓝牙我从来就没有什么研究热情，我还记得第一次用蓝牙是小学时期和同学传手机java游戏安装包，等到兴冲冲回家开始entertainment才发现那个叫刺猬索尼克的游戏实在不好玩。主打通过蓝牙RSSI作为定位的技术方案，我只想说这是“先天残疾”，原因应该无需点破，dddd，但场景设计合理的话还是能够做出好的产品体验。~~可惜~~这个零件大多都是主机厂领导们一看，特斯拉整出了个花活啊手机可以做车钥匙，智能化怎么能落后于人？于是PEPS部门就开始把433M换成2.4G继续往以前的老思路里套，于是到今天大家用到的数字钥匙体验还是如此惨不忍睹。
+
+## Apple CarKey
+月初被领导安排了，调给钥匙线支援做CarKey认证，理由很牵强啊说NFC钥匙的demo是我做的，我wu欣fa然fan接bo受，结果做完NFC就顺理成章地继续做UWB，早知道推给CarPlay的兄弟接这个活。
+
+苹果去年和宝马合作推出了手机车钥匙，业内还是挺关注的（今年苹果WWDC上发布的全新CarPlay合作品牌里居然没有宝马不禁让人有点想法）。随着CCC3.0版本技术规范的发布，BLE/UWB的相关要求也正式浮出水面。从第20章开始的三个大章节分别描述了UWB MAC、PHY以及Security规范。众所周知DK中的UWB是需要依靠BLE建立的信道作为基础，initiator与responser协商好测距参数后发送给各辅助锚点才能开始Ranging Session，所以想真正实现UWB测距还需要研读第19章低功耗蓝牙接口。
+
+终于，世界线收束，死去的蓝牙突然开始攻击我。
+
+其实CCC作为一份典型的technical specification对于其所应用的各种技术理论描述足够详细，以我熟悉的NFC和密码学两部分为例，在阅读如NFC接口、车主配对、认证和保密性、数字证书架构等章节的过程非常愉悦，重点关注规范定义的流程与数据结构即可，展开的技术细节图例和公式可以快速扫过。但是看UWB章节起初一头雾水，相关计算式和几个图例也是莫名其妙，所以只能先放下正文，回归原理。
+
+## The Earth, The Moon, The Light
+人类经过三百多年的研究计算出了光在真空中传播速度。53年前的7月，阿姆斯特朗在月球上放置了第一个激光反射器，通过记录光飞行的时间，数天后科学家们获得了相对精确的地月距离。
+
+ToF即Time of Flight，属于双向测距技术，其主要利用信号在两个异步收发器间往返飞行的时间来测量节点间的距离。ToF测距已经广泛用于3D成像、机器视觉、室内定位等领域。前文提到的地月距离测量就是典型的激光ToF应用，当然它的难点更多在于接收从月球返回的光子。在不同的应用场景中，面对的实际问题不同，所需要搭建的数学模型也不同。例如对某物体的探测，靠目标物表面反射回传感器获得时间差计算距离，具体到场景成像的做法和运动检测的做法是不一样的。对于定位而言，尤其是对人体之于车辆的位置关系，可以将人携带的某个设备代表这个人的坐标，通过车中布置的锚点设备搭建坐标系，即直接抽象为点与点间的距离。如果一套理想环境下的测距系统中存在一个定位锚点，那么根据ToF可以得到设备离锚点的距离，即落在以该锚点为圆心距离为半径做圆的圆周上，两个圆确定方向，三个圆确定点。
+
+那么如何得到待测设备（人）与锚点间的距离？一定不是通过人体表面的无源反射，所以人所携带的设备需要具备接收和发送信号的能力。这个设备就是CCC中定义的initiator，是CarKey中的iPhone与iWatch。
+
+## Time Becomes an Issue
+Timing很重要，尤其在使用光作为尺子的时候，对时间的把控失之毫厘差之千里，（300,000,000,00 <-> 1,000,000,000）通过单位换算得到1纳秒会带出30厘米的误差。由于参与测距的收发双方都有自己独立的时钟，并考虑存在操作系统调度、任务处理等过程中的可能耗时，如何处理它们组成的系统中存在的时间误差直接决定了测距的精度。
+
+### Single-side two-way ranging
+![SSTW](https://s3.bmp.ovh/imgs/2022/08/08/67ab23dc5b277b62.png)
+最基本的双向测距需要有发起方与响应方两个角色。发起方将统计测距包离开天线至接收到响应方回复的应答包时间差值，记作reply time $R_a$，响应方会设置处理的延迟时间组织到应答包中，记作delay time $D_b$，飞行时间记作$T_f$。其中$D_b$比$T_f$大几个数量级，在理想情况下可以得到如下公式
+$$R_a = 2 \cdot T_f + D_b \tag{1}\label{1}$$
+发起方能够记录得到$R_a$，解析应答包能够得到响应延时$D_b$，则距离轻松地通过$T_f \cdot C$计算到手。
+
+接下来考虑时钟偏差场景。
+$$\hat{R_a} = (1 + e_a)R_a = k_aR_a \tag{2a}\label{2a}$$
+$$\hat{D_b} = (1 + e_b)D_b = k_bD_b \tag{2b}\label{2b}$$
+加了hat的表示实际值，$e_a$和$e_b$分别表示各方引入的时间误差导致的模型偏差，$k$为偏差的系数表达。将实际值代入公式${\eqref{1}}$中得到实际飞行时间计算式为
+$$\hat{T_f} = \frac{1}{2} \left( \hat{R_a} - \hat{D_b} \right) \tag{3}\label{3}$$
+实际误差为
+$$
+\begin{align}
+\hat{T_f} - T_f &= \frac{1}{2} \left( \hat{R_a} - \hat{D_b} \right) - \frac{1}{2} \left( R_a - D_b \right) \tag{4a}\label{4a} \\
+&= \frac{1}{2} \left( e_aR_a - e_bD_b \right) \tag{4b}\label{4b} \\
+\end{align}
+$$
+将${\eqref{1}}$式代入${\eqref{4b}}$有
+$$
+\begin{align}
+\hat{T_f} - T_f &= \frac{1}{2} \left( e_aR_a - e_bD_b \right) \\
+&= \frac{1}{2} (e_a(2T_f + D_b)-e_bD_b) \\
+&= e_aT_f + \frac{D_b}{2} (e_a - e_b) \tag{5}\label{5} \\
+\end{align}
+$$
+根据${\eqref{5}}$式可以看出误差主要由$D_b$决定，因为$T_f$大概是纳秒级的值。假定$D_b$延时设置为1毫秒，双方时钟偏差最差情况40ppm（$\pm$20ppm），即误差为$\frac{1 \times 10^{-3} \times 40 \times 10^{-6} }{2} = $20纳秒，产生了6米多的误差，完全不可用。
+
+如果想到达厘米级测距精度，需要将delay时间压缩到微秒级组织应答包并发出，~~每个指令周期都可能遇到BPU没猜准，cache没命中，等待处理优先级更高的中断（当然Cortex-M核大多是静态流水会有相对固定的周期）~~几乎不可取。那么只能寻求一个更精准的时钟，且该时钟至少要到达1ppm的精度。无论从功耗和成本考虑，对于一套移动系统而言也几乎无法办到。
+
+### Double-side two-way ranging
+![DSTW](https://s3.bmp.ovh/imgs/2022/08/08/98b0fe4b2b0b8708.png)
+在单边双向测距的基础上增加一个数据交换有机会提升整个测距系统的精度。
+
+先不急着计算，看一眼图例。加了一个exchange等于把双方身份互换再做一次SSTW，中间的$T_f$重合了一次（其实也就是两个独立的SSTW组合起来简化成传递三个packet），参考上一节中得到的结论，猜测DSTW方法中整个系统的误差可能与$D_a和D_b$的运算有关。按照拆成两个独立的SSTW列式
+$$
+\begin{cases}
+R_a = 2 T_f + D_b & \\
+R_b = 2 T_f + D_a & \\
+\end{cases}
+\tag{6}\label{6}
+$$
+得到
+$$T_f = \frac{1}{4} (R_a - D_b + R_b - D_a) \tag{7}\label{7}$$
+依然是时钟偏差情况，这次分为了四段时间差
+$$
+\begin{align}
+\hat{R_a} &= (1 + e_a)R_a = k_aR_a \tag{8a}\label{8a} \\
+\hat{R_b} &= (1 + e_b)R_b = k_bR_b \tag{8b}\label{8b} \\
+\hat{D_a} &= (1 + e_a)D_b = k_aD_b \tag{8c}\label{8c} \\
+\hat{D_b} &= (1 + e_b)D_b = k_bD_b \tag{8d}\label{8d} \\
+\end{align}
+$$
+实际飞行时间计算式为
+$$\hat{T_f} = \frac{1}{4} \left( \hat{R_a} - \hat{D_b} + \hat{R_b} - \hat{D_a} \right) \tag{9}\label{9}$$
+综合${\eqref{7}\eqref{9}}$得到实际误差为
+$$
+\begin{align}
+\hat{T_f} - T_f &= \frac{1}{4} \left( \hat{R_a} - \hat{D_b} + \hat{R_b} - \hat{D_a} \right) - \frac{1}{4} (R_a - D_b + R_b - D_a) \\
+&= \frac{1}{4} (e_a(R_a - D_a) + e_b(R_b - D_b)) \tag{10}\label{10} \\
+\end{align}
+$$
+代入${\eqref{6}}$得到
+$$
+\begin{align}
+\hat{T_f} - T_f &= \frac{1}{4} (e_a(R_a - D_a) + e_b(R_b - D_b)) \\
+&= \frac{1}{4} (e_a(2T_f + D_b - D_a) + e_b(2T_f + D_a - D_b)) \\
+&= \frac{1}{2} T_f(e_a + e_b) + \frac{1}{4} (D_b - D_a)(e_a - e_b) \tag{11}\label{11} \\
+\end{align}
+$$
+根据${\eqref{11}}$可以看出，$T_f(e_a + e_b)$是一个极小值，系统误差主要来自于$(D_b - D_a)(e_a - e_b)$，即两方设置的delay时间，如果双方设置相同值（理想情况，一定存在时钟沿误差），则上式右半部分消去可以取到最小值，这也是这种测距计算被称为**对称双边双向测距**的由来。在参考文献5中说明了125MHz时钟以$\pm40$ppm标准组成的测距系统，估算出80飞秒的测量误差，约为24微米，是一个非常优秀的结果。
+
+但是实际操作中很难将双方的delay设置成同一个值。测距过程中的三个报文必须按照严格的时序收发，在未协调的、开放的网络环境中很容易出现数据包冲突，一旦发生则整个过程就要重新来过，继而又增加了网络拥堵。在一个delay time中包含了接收解析数据包、处理各自业务、组织并发出响应包这些任务，那么必定要设置一个留有余裕的delay time来协调收发双方的实际处理耗时。
+
+从另一方面考虑，如果收发数据包的时机变得不那么严苛，则可以大大优化网络数据吞吐量，做到一次传输为多个节点服务，降低了整体信道占用。
+
+
+### Alternative double-side two-way ranging
+尝试使用一个乘法系统。沿用${\eqref{6}}$可得
+$$
+\begin{align}
+R_aR_b &= (2T_f + D_b)(2T_f + D_a) \\
+&= 2T_f(2T_f + D_a) + 2T_fD_b + D_aD_b \\
+&= 2T_f(2T_f + D_a + D_b) + D_aD_b \tag{12}\label{12} \\
+\end{align}
+$$
+则
+$$R_aR_b - D_aD_b = 2T_f(2T_f + D_a + D_b) \tag{13}\label{13}$$
+再次带入${\eqref{6}}$式
+$$
+\begin{cases}
+R_aR_b - D_aD_b = 2T_f(R_a + D_a) & \\
+R_aR_b - D_aD_b = 2T_f(R_b + D_b) & \\
+\end{cases}
+\tag{14}\label{14}
+$$
+继而有
+$$
+\begin{align}
+T_f &= \frac{R_aR_b - D_aD_b}{2(R_a + D_a)} \tag{15a}\label{15a} \\
+&= \frac{R_aR_b - D_aD_b}{2(R_b + D_b)} \tag{15b}\label{15b} \\
+\end{align}
+$$
+注意，${\eqref{14}}$式暗示了理想环境下$$(R_a + D_a)与(R_b + D_b)$$相等，则$(15)$式可以统一写作
+$$T_f = \frac{R_aR_b - D_aD_b}{R_a + R_b + D_a + D_b} \tag{16}\label{16}$$
+接下来看真实世界中存在时钟偏差的实际飞行时间。使用$(8)$式对DSTW的误差描述，$(15)$式将变为
+$$
+\begin{align}
+\hat{T_f} &= \frac{\hat{R_a}\hat{R_b} - \hat{D_a}\hat{D_b}}{2(\hat{R_a} + \hat{D_a})} \tag{17a}\label{17a} \\
+&= \frac{\hat{R_a}\hat{R_b} - \hat{D_a}\hat{D_b}}{2(\hat{R_b} + \hat{D_b})} \tag{17b}\label{17b} \\
+\end{align}
+$$
+可以整理出与理想$T_f$相关算式（这里用误差系数k便于计算）
+$$
+\begin{align}
+\hat{T_f} &= \frac{k_ak_b(R_aR_b - D_aD_b)}{2k_a(R_a + D_a)} = k_b \frac{R_aR_b - D_aD_b}{2(R_a + D_a)} = k_bT_f \tag{18a}\label{18a} \\
+&= \frac{k_ak_b(R_aR_b - D_aD_b)}{2k_b(R_b + D_b)} = k_a \frac{R_aR_b - D_aD_b}{2(R_b + D_b)} = k_aT_f \tag{18b}\label{18b} \\
+\end{align}
+$$
+实际误差为
+$$
+\begin{align}
+\hat{T_f} - T_f &= (k_a - 1)T_f = e_aT_f \tag{19a}\label{19a} \\
+&= (k_b - 1)T_f = e_bT_f \tag{19b}\label{19b} \\
+\end{align}
+$$
+通过上式可以看出，误差是一个仅与时钟和飞行时间有关的极小值，且不需要对收发双方的delay时间做任何要求，因此也被称为**非对称双边双向测距**。另外，不同于${\eqref{11}}$式中时钟误差来自于两个不同设备，采用这个方法可以选取ppm更低一方的算式，标定一个设备就能让整体系统获取更优秀的测距结果。
+
+## UWB MAC Protocol
+基于DSTW的测距原理已经得到论证，接下来是如何将理论拉下神坛。UWB PHY就不想讲了，太底层了∠(ᐛ」∠)＿
+
+数字钥匙中使用的UWB测距协议是基于时间块的单对多锚点（O2M）连续测距。很多文献中都会画一个time grid，先是会话的ranging session，session中包含了很多block，block中包含了很多round，round中包含了很多slot，slot又是由最基本的chap组成。以下为CCC中的附图，已经能够看出block-based的一些端倪。
+
+![overview of MAC grid](https://s3.bmp.ovh/imgs/2022/08/28/171883c0bb55ba09.png) ![time diagram](https://s3.bmp.ovh/imgs/2022/08/28/6b5b786faf13b8ea.png)
+
+所以在真正开始time fly前，O2M测距系统的很多参数都已经协商完成，如CCC规范定义的DK Message章节中ranging session request和ranging session setup request就是经过BLE将如版本信息、会话id、UWB通道、网络掩码、响应方锚点数、chap、slot、跳频掩码等等确定下来。
+
+我觉得MAC层只需要强调一个点，每一个STS包都对应了一个slot，非常形象，每个数据包都有对应的槽，以及为了填充time block的空槽。继而每个round就代表了系统一轮完整的测距过程，每个block中只需要一个round的数据，所以跳频就是在一个block中跳round的index。因为一个chap是1/3 ms，对于车钥匙场景的距离耗时完全是绰绰有余。对于测距timing需要配置的RSTU和pear ranging round slots就是一个简单的参数计算和组合，按照block-based模式理解即可。
+
+画了两个简单的图，蓝色箭头代表initiator发出的数据帧SP0，红色代表initiator和responser发出的参考帧SP3（画成斜线仅仅是为了表示ToF有耗时，按真实世界中的时间比例斜率应该不会这么大）。在交换测距能力并协商后，测距系统就可以根据定义对各个锚点设置回复顺序，可以看到每个responser发出的SP3都会有对应的slot接收。
+
+![O2M](https://s3.bmp.ovh/imgs/2022/09/01/ca3497538d68a490.png)![block-based mode full](https://s3.bmp.ovh/imgs/2022/09/01/35c2c63a582d38e0.png)
+
+但因为我没有coding UWB部分的驱动代码，不太确定如锚点timing处理发生问题导致SP3送不出去，会给系统带来什么影响，以及异常处理机制是什么。大概问了下开发的同事说对于发送和接收方会分别报超时异常与节点丢失，最终体现为在当次ranging block无法使用这个锚点的距离。
+
+## All For Security
+对于常见的基于射频信号衰减的测距方式，存在一个先天死穴就是通过额外手段传递信号掩盖真实距离。例如低楼层的老小区中把车停在楼下，钥匙放在家里离车也就二三十米的直线距离，攻击者很轻易地能嗅探到信号并直接放大；以及NFC卡盗刷，通过假卡和假读卡器延长通信链路，比如我以前做过的NFC Relay模型。
+
+![NFC Relay](https://s3.bmp.ovh/imgs/2022/09/04/437cad4a87ebec2f.png)
+
+总之这类被称为中继攻击的方式采取的是物理手段，本质上在整个系统中延长了通信距离，没有改变其他内容。物抗才能抵御物理攻击，这个道理大家都懂。
+
+使用ToF的Secure Ranging UWB系统就可以完美对抗中继，除非攻击方制造了一些小型曲率泡给SP3包的电磁波加到超光速，在这里我想呼吁掌握这项技术的黑客大哥们不要执着于偷车了，人类的征途是星辰大海。
+
+UWB Security在CCC的第22章有详细描述，主要理解那张URSK经过KDF派生各个key的图就好，SP0采用的AES-CCM模式就是CBC-MAC消息认证+CTR模式加密，可以参考我的密码学复习系列的[这篇文章](https://zengrx.github.io/2021/03/19/Block-Cipher-Mode-of-Operation/)
+
+## One More Thing
+成熟商业化UWB板子的PHY层和MAC层一般都有IC厂家提供协议栈SDK给到方案商使用，搭好硬件平台，配置好相关参数后从SDK中直接可以取到各个锚点返回的距离值。方案商基本做好两件事情：1.根据自己的锚点系统做定位算法优化，各个锚点ranging的圆圈因为现实世界中存在的误差肯定不会完美交在一个点上；2.制定应用业务流程，包含且不限于UWB与BLE的交互配合，主辅锚点在CAN网络间的通信，PEPS区间定义如从RKE切到PE区域迎宾解锁进而到PS区域发动机认证一系列配合整车ECU的策略，整体功耗优化等等。
+
+终于写的差不多了，最近心情很好所以这次没有矫情的结束语，祝大家身体健康( ´･ω･)ﾉ
+
+## References
+1. [An Overview of UWB Standards and Organizations (IEEE 802.15.4, FiRa, A时钟精度 ppmpple): Interoperability Aspects and Future Research Directions](https://arxiv.org/pdf/2202.02190.pdf)
+2. Car Connectivity Consortium Digital Key Release 3 Version 1.0.0 - CCC
+3. Car Keys Specification R1 Developer Preview 3 - Apple Inc
+4. UWB MAC User Manual - NXP Semiconductors
+5. [An alternative double-sided two-way ranging method](https://ieeexplore.ieee.org/document/7822844)
+6. [Enhanced Ultra Wideband (UWB) Physical Layers (PHYs) and Associated Ranging Techniques](https://ieeexplore.ieee.org/document/9179124)
+7. [uwb enhances security of passive keyless entry](https://www.edn.com/uwb-enhances-security-of-passive-keyless-entry/)
